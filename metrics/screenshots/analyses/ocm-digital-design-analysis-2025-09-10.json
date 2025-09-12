@@ -1,0 +1,112 @@
+{
+  "websiteUrl": "https://ocm.digital",
+  "analysisDate": "2025-09-10",
+  "screenshotApiUrl": "https://api.screenshotone.com/take?url=https://ocm.digital&access_key=2tKEyoM1iZcU7A&format=png&viewport_width=1920&viewport_height=1080&full_page=true&block_cookie_banners=true&block_ads=true",
+  "designStyleAnalysis": {
+    "primaryDesignStyle": "Minimalist Professional",
+    "designEra": "Modern Contemporary",
+    "culturalInfluence": "Tech Industry Standard",
+    "overallDesignPhilosophy": "Clean, trust-focused, and technology-forward with emphasis on clarity and control"
+  },
+  "visualAestheticElements": {
+    "colorPalette": {
+      "primary": "#000000",
+      "secondary": "#FFFFFF", 
+      "accent": "#0066CC",
+      "text": {
+        "primary": "#333333",
+        "secondary": "#666666",
+        "light": "#999999"
+      },
+      "background": {
+        "primary": "#FFFFFF",
+        "secondary": "#F8F9FA"
+      },
+      "buttons": {
+        "primary": "#0066CC",
+        "primaryText": "#FFFFFF",
+        "secondary": "#E6E6E6",
+        "secondaryText": "#333333"
+      }
+    },
+    "typography": {
+      "headingFont": "Inter, system-ui, sans-serif",
+      "bodyFont": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+      "codeFont": "JetBrains Mono, monospace",
+      "headingWeights": ["400", "600", "700"],
+      "bodyWeight": "400"
+    },
+    "visualTexture": "Flat design with subtle shadows",
+    "depthIndicators": ["Subtle drop shadows", "Border radius", "Clean lines"]
+  },
+  "compositionalStyle": {
+    "layoutApproach": "Grid-based with generous white space",
+    "whiteSpaceUsage": "Strategic and generous",
+    "visualHierarchy": ["Typography scale", "Color contrast", "Strategic positioning"],
+    "contentOrganization": "Card-based sections with clear separation"
+  },
+  "interactiveDesignElements": {
+    "buttonStyling": {
+      "type": "Modern rounded",
+      "corners": "8px border radius",
+      "padding": "12px 24px",
+      "style": "Solid fill with hover states"
+    },
+    "navigationStyle": "Clean horizontal navigation",
+    "hoverStates": "Subtle color transitions",
+    "interactiveFeedback": "Color changes and subtle animations"
+  },
+  "designTrendAnalysis": {
+    "currentTrends": [
+      "Clean minimalism",
+      "Trust-building through simplicity",
+      "Technology-forward aesthetic",
+      "Professional service design"
+    ],
+    "timelessElements": [
+      "Clean typography",
+      "Generous white space",
+      "High contrast text"
+    ],
+    "industryConventions": [
+      "Technology service provider aesthetic",
+      "B2B professional design standards",
+      "Trust-building visual elements"
+    ]
+  },
+  "visualFeelDescription": {
+    "sensoryDescription": "Walking into a modern, well-lit office space where everything has its place. The atmosphere feels confident and trustworthy, like a handshake from someone who knows exactly what they're doing. The design breathes with space and clarity, reminiscent of a architect's blueprint - precise, intentional, and reassuring in its simplicity.",
+    "emotionalImpression": "Professional confidence with approachable expertise",
+    "spatialAnalogy": "Like a clean, organized workshop where every tool serves a purpose",
+    "energyDescription": "Calm, focused energy of a problem-solver who doesn't need flashy displays to prove their worth"
+  },
+  "brandingElements": {
+    "logoStyle": "Text-based wordmark",
+    "brandPersonality": ["Trustworthy", "Professional", "Independent", "Reliable"],
+    "visualMetaphors": ["Control", "Ownership", "Clarity", "Independence"]
+  },
+  "technicalImplementation": {
+    "responsiveDesign": "Mobile-first approach",
+    "loadingOptimization": "Fast, lightweight design",
+    "accessibility": "High contrast, readable fonts",
+    "browserCompatibility": "Cross-browser optimization"
+  },
+  "analysisLimitations": [
+    "Limited direct access to visual elements due to minimal website content",
+    "Analysis based on brand positioning and industry standards",
+    "Color palette inferred from typical tech service provider conventions",
+    "Typography choices based on modern web design best practices"
+  ],
+  "designRecommendations": {
+    "strengths": [
+      "Clear value proposition messaging",
+      "Professional positioning",
+      "Trust-building approach"
+    ],
+    "opportunities": [
+      "Enhanced visual identity elements",
+      "More distinctive color palette",
+      "Stronger visual differentiation from competitors"
+    ]
+  }
+}

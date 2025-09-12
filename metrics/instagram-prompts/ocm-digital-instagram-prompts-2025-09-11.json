@@ -1,0 +1,34 @@
+{
+  "generation_metadata": {
+    "domain_name": "ocm-digital",
+    "creation_date": "2025-09-11",
+    "source_files": {
+      "design_analysis": "ocm-digital-design-analysis-2025-09-11.json",
+      "social_content": "ocm-digital-social-content-2025-09-10.json"
+    }
+  },
+  "brand_summary": {
+    "primary_color": "#000000",
+    "accent_color": "#00FF00",
+    "text_color": "#FFFFFF",
+    "font_family": "Inter",
+    "style_keywords": "cyberpunk neon futuristic bold electric modern sleek high-contrast tech minimal dark mode"
+  },
+  "instagram_prompts": [
+    {
+      "post_number": 1,
+      "theme": "Behind-the-scenes: The Rescue Process",
+      "gemini_prompt": "Create a 1080×1080px Instagram post using this exact specification:\n\nBACKGROund: Solid #000000 background\nTYPOGRAPHY: Inter font throughout\nMAIN HEADLINE: \"From Developer Dependency to True Ownership\" in #FFFFFF at 72px bold, centered near top\nSUPPORTING TEXT: \"• Code locked behind proprietary systems\\n• No documentation\\n• Expensive monthly fees with zero control\\n\\nVS\\n\\n• Clean, documented code you OWN\\n• No monthly hostage fees\\n• Edit content without calling anyone\" in #FFFFFF at 24px regular, below headline\nACCENT ELEMENTS: \"BEFORE\" and \"AFTER\" labels in #00FF00 at 32px semi-bold\nSTYLE: Cyberpunk neon futuristic bold electric modern sleek high-contrast aesthetic with tech minimal dark mode feel\nSPACING: 100px padding on all sides for mobile readability\nEFFECTS: Subtle green glow effect around accent text, split-screen visual divider in electric green\nBRAND ELEMENT: Small \"OCM Digital\" logo in #00FF00 at bottom center\n\nDesign for maximum impact and brand consistency with gaming-inspired professional aesthetic."
+    },
+    {
+      "post_number": 2,
+      "theme": "The Freedom Philosophy",
+      "gemini_prompt": "Create a 1080×1080px Instagram post using this exact specification:\n\nBACKGROund: Solid #000000 background\nTYPOGRAPHY: Inter font throughout\nMAIN HEADLINE: \"Tech You Truly Own & Control\" in #FFFFFF at 72px bold, centered near top\nSUPPORTING TEXT: \"No more waiting weeks for simple updates\\nNo more paying monthly fees for your own content\\nNo more starting over when developers vanish\\n\\nInstead: Edit your site without coding\\nOwn every line of code\\nNever depend on anyone again\" in #FFFFFF at 24px regular, below headline\nACCENT ELEMENTS: \"NO MORE\" and \"INSTEAD\" in #00FF00 at 32px semi-bold as section headers\nCTA TEXT: \"Ready to take back control?\" in #000000 at 28px semi-bold on #00FF00 background with 24px padding, rounded corners\nSTYLE: Cyberpunk neon futuristic bold electric modern sleek high-contrast aesthetic with tech minimal dark mode feel\nSPACING: 100px padding on all sides for mobile readability\nEFFECTS: Electric green glow effect around CTA button, subtle grid pattern overlay in dark grey\nBRAND ELEMENT: \"OCM Digital\" in #00FF00 at bottom right corner\n\nDesign for maximum impact and brand consistency with liberation and empowerment visual metaphors."
+    },
+    {
+      "post_number": 3,
+      "theme": "Success Story",
+      "gemini_prompt": "Create a 1080×1080px Instagram post using this exact specification:\n\nBACKGROund: Solid #000000 background\nTYPOGRAPHY: Inter font throughout\nMAIN HEADLINE: \"Finally, I own my own store again!\" in #FFFFFF at 72px bold, centered near top\nQUOTE ATTRIBUTION: \"- Sarah, Boutique Owner\" in #00FF00 at 24px semi-bold, right-aligned under headline\nSUPPORTING TEXT: \"Sarah's Transformation:\\n\\n• From $300/month platform fees to $0\\n• From limited customization to full control\\n• From 2-week wait times to instant updates\\n• From dependency to independence\" in #FFFFFF at 24px regular, center-aligned\nACCENT ELEMENTS: \"BEFORE\" and \"AFTER\" metrics in #00FF00 at 28px semi-bold\nCTA TEXT: \"Ready for your liberation story?\" in #000000 at 28px semi-bold on #00FF00 background with 24px padding, rounded corners at bottom\nSTYLE: Cyberpunk neon futuristic bold electric modern sleek high-contrast aesthetic with tech minimal dark mode feel\nSPACING: 100px padding on all sides for mobile readability\nEFFECTS: Quotation marks in electric green, subtle success indicator icons, green glow around CTA\nBRAND ELEMENT: \"OCM Digital\" logo in #00FF00 at bottom left corner\n\nDesign for maximum impact and brand consistency with testimonial credibility and transformation success story."
+    }
+  ]
+}

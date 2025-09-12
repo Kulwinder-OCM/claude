@@ -1,0 +1,118 @@
+{
+  "brand": "Bastholm Creative Consulting",
+  "domain": "bastholm.com",
+  "content_strategy_date": "2025-09-12",
+  "brand_voice": {
+    "tone": "Professional yet approachable",
+    "personality": [
+      "Pragmatic",
+      "Results-driven", 
+      "Anti-hype",
+      "Sophisticated",
+      "Innovation-focused"
+    ],
+    "messaging_pillars": [
+      "Practical AI implementation",
+      "Strategic business transformation",
+      "Results over hype",
+      "Client success stories"
+    ]
+  },
+  "content_themes": {
+    "primary_themes": [
+      "AI practical applications in business",
+      "Strategic AI implementation guidance",
+      "Business transformation success stories",
+      "Cutting through AI hype with real solutions"
+    ],
+    "content_categories": [
+      "Educational content about AI implementation",
+      "Client success case studies",
+      "Industry insights and trends",
+      "Behind-the-scenes consulting process",
+      "Thought leadership on AI strategy"
+    ]
+  },
+  "target_audience_social": {
+    "primary": "C-suite executives and decision makers",
+    "secondary": [
+      "Chief Technology Officers",
+      "Chief Innovation Officers", 
+      "Digital transformation leaders",
+      "Strategic consultants",
+      "Tech entrepreneurs"
+    ],
+    "pain_points_addressed": [
+      "AI implementation uncertainty",
+      "Difficulty separating AI hype from reality",
+      "Need for rapid, practical AI solutions",
+      "Desire for measurable business outcomes"
+    ]
+  },
+  "instagram_post_concepts": [
+    {
+      "post_id": "bastholm-post-1",
+      "concept": "AI Implementation Reality Check",
+      "headline": "AI isn't magic. It's methodology.",
+      "key_message": "Real AI transformation comes from strategic implementation, not flashy features",
+      "visual_concept": "Clean infographic showing practical AI implementation steps",
+      "content_type": "Educational",
+      "target_engagement": "Executives seeking practical AI guidance",
+      "hashtags": ["#AIStrategy", "#DigitalTransformation", "#BusinessResults", "#AIImplementation", "#PracticalAI"]
+    },
+    {
+      "post_id": "bastholm-post-2", 
+      "concept": "Client Success Spotlight",
+      "headline": "From AI potential to measurable outcomes",
+      "key_message": "How we helped [Client] achieve 40% efficiency gains through strategic AI implementation",
+      "visual_concept": "Before/after metrics visualization with client logo (anonymized if needed)",
+      "content_type": "Case Study",
+      "target_engagement": "Prospects looking for proven results",
+      "hashtags": ["#ClientSuccess", "#AIResults", "#BusinessTransformation", "#EfficiencyGains", "#StrategicAI"]
+    },
+    {
+      "post_id": "bastholm-post-3",
+      "concept": "Cutting Through AI Hype",
+      "headline": "AI hype vs. AI reality: What actually works",
+      "key_message": "Focus on solving real business problems, not chasing AI trends",
+      "visual_concept": "Split-screen design showing 'Hype' vs 'Reality' with practical examples",
+      "content_type": "Thought Leadership",
+      "target_engagement": "Decision makers tired of AI marketing noise",
+      "hashtags": ["#AIReality", "#BusinessStrategy", "#NoHype", "#PracticalSolutions", "#AIConsulting"]
+    }
+  ],
+  "content_calendar_recommendations": {
+    "posting_frequency": "3-4 posts per week",
+    "optimal_posting_times": [
+      "Tuesday-Thursday 9-11 AM CET (business hours)",
+      "Wednesday-Friday 2-4 PM CET (afternoon engagement)"
+    ],
+    "content_mix": {
+      "educational": "40%",
+      "case_studies": "30%", 
+      "thought_leadership": "20%",
+      "behind_scenes": "10%"
+    }
+  },
+  "engagement_strategy": {
+    "call_to_action_types": [
+      "Book a strategic AI consultation",
+      "Download AI implementation guide",
+      "Connect for AI transformation discussion",
+      "Share your AI implementation challenges"
+    ],
+    "engagement_tactics": [
+      "Ask questions about AI implementation challenges",
+      "Share actionable insights and tips",
+      "Engage with industry leader content",
+      "Participate in relevant AI and business transformation conversations"
+    ]
+  },
+  "brand_consistency_guidelines": {
+    "visual_style": "Clean, minimalist design matching website aesthetic",
+    "color_usage": "Maintain white/grayscale palette with strategic accent colors",
+    "typography": "Clean sans-serif fonts",
+    "logo_placement": "Subtle integration of octopus logo",
+    "messaging_consistency": "Always emphasize practical results over hype"
+  }
+}

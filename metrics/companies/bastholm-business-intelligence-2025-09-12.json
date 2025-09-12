@@ -1,0 +1,67 @@
+{
+  "company_name": "Bastholm Creative Consulting",
+  "domain": "bastholm.com",
+  "analysis_date": "2025-09-12",
+  "business_model": {
+    "type": "Consulting Services",
+    "primary_services": [
+      "AI consulting and strategic advisory",
+      "Generative AI implementation guidance",
+      "Digital transformation consulting"
+    ],
+    "value_proposition": "Delivering tangible results from the potential of AI by cutting through the hype and providing rapid implementation solutions"
+  },
+  "industry_sector": [
+    "Technology Consulting",
+    "Artificial Intelligence Strategy",
+    "Digital Transformation"
+  ],
+  "target_audience": {
+    "primary": "Ambitious brands and enterprises",
+    "segments": [
+      "Companies seeking AI implementation guidance",
+      "Tech companies",
+      "Media companies",
+      "Consumer goods brands"
+    ]
+  },
+  "competitive_positioning": {
+    "differentiators": [
+      "Pragmatic AI expertise",
+      "Results-driven approach",
+      "Rapid implementation focus",
+      "Strategic guidance over hype"
+    ],
+    "market_position": "Boutique AI consulting specialist"
+  },
+  "company_details": {
+    "size": "Small to medium consulting firm",
+    "structure": "Boutique consulting",
+    "geographic_focus": {
+      "headquarters": "Denmark (Copenhagen timezone)",
+      "market_reach": "Global"
+    }
+  },
+  "notable_clients": [
+    "Google Cloud",
+    "Nestlé"
+  ],
+  "contact_information": {
+    "website": "www.bastholm.com",
+    "linkedin": "https://www.linkedin.com/in/lbastholm/"
+  },
+  "marketing_recommendations": {
+    "focus_areas": [
+      "Emphasize practical AI implementation expertise",
+      "Showcase client success stories",
+      "Highlight ability to translate AI potential into business outcomes",
+      "Position as anti-hype, results-focused consultancy"
+    ],
+    "content_themes": [
+      "AI practical applications",
+      "Business transformation success stories",
+      "Strategic AI guidance",
+      "Rapid implementation methodologies"
+    ]
+  }
+}
