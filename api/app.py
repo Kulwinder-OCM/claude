@@ -32,18 +32,73 @@ workflow_results = {}
 @app.route('/')
 def index():
     """Main page with form for URL input and AI model selection."""
-    # Get available providers
-    available_providers = AIProviderFactory.list_available_providers()
-    configured_providers = config.get_available_providers()
+    try:
+        # Get available providers
+        available_providers = AIProviderFactory.list_available_providers()
+        configured_providers = config.get_available_providers()
 
-    # Filter to only show configured providers
-    text_providers = []
-    for provider, status in available_providers.items():
-        if status.get("available") and configured_providers.get(provider, False):
-            if provider in ["claude", "openai", "gemini"]:  # Text capable providers
-                text_providers.append(provider)
+        # Filter to only show configured providers
+        text_providers = []
+        for provider, status in available_providers.items():
+            if status.get("available") and configured_providers.get(provider, False):
+                if provider in ["claude", "openai", "gemini"]:  # Text capable providers
+                    text_providers.append(provider)
 
-    return render_template('index.html', text_providers=text_providers)
+        return render_template('index.html', text_providers=text_providers)
+
+    except Exception as e:
+        print(f"Index route error: {e}")
+        import traceback
+        traceback.print_exc()
+
+        # Return a simple working HTML page
+        return f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>AI Brand Analysis</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        </head>
+        <body>
+            <div class="container mt-5">
+                <h1 class="text-center mb-4">AI Brand Analysis & Campaign Generator</h1>
+                <div class="alert alert-warning">
+                    <strong>Debug Mode:</strong> Template loading failed: {str(e)}
+                </div>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Analyze Website</h3>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="/analyze">
+                                    <div class="mb-3">
+                                        <label class="form-label">Website URL:</label>
+                                        <input type="url" name="url" class="form-control" placeholder="https://example.com" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">AI Provider:</label>
+                                        <select name="text_analysis_provider" class="form-control">
+                                            <option value="claude">Claude</option>
+                                            <option value="gemini">Gemini</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Start Analysis</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        </body>
+        </html>
+        '''
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -94,14 +149,35 @@ def analyze():
 def results(session_id):
     """Display results page for a specific analysis session."""
     if session_id not in workflow_results:
-        flash('Analysis session not found', 'error')
         return redirect(url_for('index'))
 
     results = workflow_results[session_id]
 
     # If still in progress, show loading page
     if results.get('workflow_status') == 'in_progress':
-        return render_template('loading.html', session_id=session_id)
+        try:
+            return render_template('loading.html', session_id=session_id)
+        except Exception as e:
+            print(f"Loading template error: {e}")
+            return f'''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Analysis in Progress</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+                <meta http-equiv="refresh" content="5">
+            </head>
+            <body>
+                <div class="container mt-5">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <h2>Analyzing {results.get('url', 'website')}...</h2>
+                        <p>This may take a few minutes. Page will refresh automatically.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            '''
 
     # Extract image information if available
     images = []
@@ -121,10 +197,123 @@ def results(session_id):
                         'file_size': img.get('file_size', 0)
                     })
 
-    return render_template('results.html',
-                         results=results,
-                         session_id=session_id,
-                         images=images)
+    try:
+        return render_template('results.html',
+                             results=results,
+                             session_id=session_id,
+                             images=images)
+    except Exception as e:
+        print(f"Results template error: {e}")
+        # Create a simple results page
+        status_class = "success" if results.get('workflow_status') == 'completed' else "danger"
+
+        # Build detailed results HTML
+        business_html = social_html = design_html = images_html = ""
+
+        if results.get('phases'):
+            # Business Intelligence
+            if 'business_intel' in results['phases'] and results['phases']['business_intel'].get('data'):
+                bi_data = results['phases']['business_intel']['data']
+                business_html = f'''
+                <div class="card mt-3">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-building"></i> Business Intelligence</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Company:</strong> {bi_data.get('company_name', 'N/A')}</p>
+                        <p><strong>Description:</strong> {bi_data.get('description', 'N/A')}</p>
+                        <p><strong>Industry:</strong> {bi_data.get('industry', 'N/A')}</p>
+                        <p><strong>Products/Services:</strong> {', '.join(bi_data.get('products_services', []))}</p>
+                    </div>
+                </div>
+                '''
+
+            # Social Content
+            if 'social_content' in results['phases'] and results['phases']['social_content'].get('data'):
+                sc_data = results['phases']['social_content']['data']
+                if 'posts' in sc_data:
+                    social_html = f'''
+                    <div class="card mt-3">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="fas fa-share-alt"></i> Social Media Strategy</h5>
+                        </div>
+                        <div class="card-body">
+                    '''
+                    for i, post in enumerate(sc_data['posts'][:3], 1):
+                        concept = post.get('concept', 'N/A') if isinstance(post, dict) else str(post)
+                        caption = post.get('caption', 'N/A')[:200] if isinstance(post, dict) else 'N/A'
+                        social_html += f'<div class="mb-3"><h6>Post {i}: {concept}</h6><p>{caption}{"..." if len(str(caption)) > 200 else ""}</p></div>'
+                    social_html += '</div></div>'
+
+            # Design Analysis
+            if 'design_analysis' in results['phases'] and results['phases']['design_analysis'].get('data'):
+                da_data = results['phases']['design_analysis']['data']
+                design_html = f'''
+                <div class="card mt-3">
+                    <div class="card-header bg-warning text-white">
+                        <h5><i class="fas fa-palette"></i> Design Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Colors:</strong> {', '.join(da_data.get('colors', []))}</p>
+                        <p><strong>Fonts:</strong> {', '.join(da_data.get('fonts', []))}</p>
+                        <p><strong>Visual Style:</strong> {da_data.get('visual_style', 'N/A')}</p>
+                    </div>
+                </div>
+                '''
+
+            # Generated Images
+            if images:
+                images_html = f'''
+                <div class="card mt-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-images"></i> Generated Images ({len(images)} images)</h5>
+                    </div>
+                    <div class="card-body">
+                '''
+                for img in images:
+                    images_html += f'''
+                    <div class="mb-3 border p-3 rounded">
+                        <h6>{img.get('concept', 'Brand Image')}</h6>
+                        <p><strong>File:</strong> {img.get('filename', 'N/A')}</p>
+                        <p><strong>Status:</strong> Successfully generated</p>
+                        <a href="/download/{img.get('filepath', '')}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </div>
+                    '''
+                images_html += '</div></div>'
+
+        return f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Analysis Complete</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+        </head>
+        <body>
+            <div class="container mt-5">
+                <div class="text-center mb-4">
+                    <h1><i class="fas fa-check-circle text-success"></i> Analysis Complete!</h1>
+                    <p class="lead">Successfully analyzed <strong>{results.get('url', 'website')}</strong></p>
+                    <span class="badge bg-{status_class} fs-6 me-3">{results.get('workflow_status', 'unknown').replace('_', ' ').title()}</span>
+                    <a href="/" class="btn btn-outline-primary">
+                        <i class="fas fa-plus"></i> Analyze Another Site
+                    </a>
+                </div>
+
+                {business_html}
+                {social_html}
+                {design_html}
+                {images_html}
+
+                {f'<div class="alert alert-danger mt-3"><h5>Error:</h5><p>{results.get("error")}</p></div>' if results.get('error') else ''}
+                {f'<div class="alert alert-info mt-3">{results.get("message")}</div>' if results.get('message') else ''}
+            </div>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        </body>
+        </html>
+        '''
 
 @app.route('/status/<session_id>')
 def status(session_id):
