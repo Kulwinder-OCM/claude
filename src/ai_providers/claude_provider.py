@@ -189,20 +189,27 @@ Return only the JSON analysis object, no other text."""
                     except json.JSONDecodeError:
                         pass
 
-            # Strategy 4: Parse embedded JSON within text using regex
+            # Strategy 4: Parse embedded JSON within text using improved regex
             import re
-            json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
-            json_matches = re.findall(json_pattern, analysis_text)
+            # More flexible regex pattern that handles nested JSON structures better
+            json_pattern = r'\{(?:[^{}]|(?:\{(?:[^{}]|\{[^{}]*\})*\}))*\}'
 
-            for match in json_matches:
-                try:
-                    # Try to parse each potential JSON object found
-                    potential_json = json.loads(match)
-                    if isinstance(potential_json, dict) and len(potential_json) > 3:
-                        self._add_metadata(potential_json, url)
-                        return potential_json
-                except json.JSONDecodeError:
-                    continue
+            try:
+                json_matches = re.findall(json_pattern, analysis_text, re.DOTALL)
+
+                for match in json_matches:
+                    try:
+                        # Try to parse each potential JSON object found
+                        potential_json = json.loads(match)
+                        if isinstance(potential_json, dict) and len(potential_json) > 3:
+                            self._add_metadata(potential_json, url)
+                            return potential_json
+                    except json.JSONDecodeError:
+                        continue
+            except re.error as e:
+                # If regex fails, skip this strategy
+                print(f"Regex pattern error: {e}")
+                pass
 
             # Strategy 5: Extract JSON from explanatory text
             lines = analysis_text.split('\n')

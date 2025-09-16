@@ -31,7 +31,12 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
         try:
             # Use AI provider for intelligent analysis
             business_intel = self.ai_provider.analyze_website(html_content, url)
-            
+
+            # Check if we got a valid business intelligence response
+            if "parsing_error" in business_intel or "raw_analysis" in business_intel:
+                self.logger.warning("AI provider returned parsing error, falling back to basic extraction")
+                return self._basic_extraction(html_content, url)
+
             # Ensure required structure and add metadata
             business_intel.update({
                 "url": url,
@@ -40,9 +45,9 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
                 "ai_model": self.ai_provider.model,
                 "ai_provider": self.ai_provider.name
             })
-            
+
             return business_intel
-            
+
         except Exception as e:
             self.logger.warning(f"AI analysis failed, falling back to basic extraction: {e}")
             return self._basic_extraction(html_content, url)
