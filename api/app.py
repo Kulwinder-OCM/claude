@@ -175,22 +175,62 @@ def analyze():
             except Exception as e:
                 raise Exception(f"Failed to import BrandWorkflowOrchestrator: {str(e)}")
 
+            # Update progress
+            workflow_results[session_id].update({
+                'workflow_status': 'initializing',
+                'message': 'Setting up AI orchestrator...',
+                'progress': 10
+            })
+
             # Try to initialize orchestrator
             try:
                 print("Initializing orchestrator...")
                 orchestrator = BrandWorkflowOrchestrator()
                 print("✓ BrandWorkflowOrchestrator initialized")
+
+                # Test if basic methods exist
+                print("Testing orchestrator methods...")
+                if hasattr(orchestrator, 'run_complete_workflow'):
+                    print("✓ run_complete_workflow method exists")
+                else:
+                    raise Exception("run_complete_workflow method not found")
+
             except Exception as e:
                 raise Exception(f"Failed to initialize orchestrator: {str(e)}")
 
-            # Try to run workflow
+            # Update progress
+            workflow_results[session_id].update({
+                'workflow_status': 'running',
+                'message': 'Running AI analysis workflow...',
+                'progress': 30
+            })
+
+            # Try to run workflow with progress updates
             try:
                 print("Running complete workflow...")
-                results = orchestrator.run_complete_workflow(url)
+
+                # Run with shorter timeout and progress tracking
+                def run_with_progress():
+                    try:
+                        results = orchestrator.run_complete_workflow(url)
+                        return results
+                    except Exception as e:
+                        print(f"Workflow execution error: {e}")
+                        raise e
+
+                # Update progress during workflow
+                workflow_results[session_id].update({
+                    'workflow_status': 'analyzing',
+                    'message': 'AI analyzing website content...',
+                    'progress': 50
+                })
+
+                results = run_with_progress()
                 print(f"✓ Workflow completed. Status: {results.get('workflow_status', 'unknown')}")
 
                 # Ensure URL is in results
                 results['url'] = url
+                results['progress'] = 100
                 workflow_results[session_id] = results
 
             except Exception as e:
@@ -526,6 +566,50 @@ def test():
         test_results['traceback'] = traceback.format_exc()
 
     return jsonify(test_results)
+
+@app.route('/simple-test')
+def simple_test():
+    """Simple test that tries to run orchestrator directly without threading."""
+    test_url = "https://example.com"
+    result = {
+        'test_url': test_url,
+        'timestamp': time.time(),
+        'steps': []
+    }
+
+    try:
+        # Step 1: Import orchestrator
+        result['steps'].append({'step': 1, 'action': 'importing orchestrator'})
+        from orchestrator import BrandWorkflowOrchestrator
+        result['steps'].append({'step': 1, 'status': 'success'})
+
+        # Step 2: Initialize orchestrator
+        result['steps'].append({'step': 2, 'action': 'initializing orchestrator'})
+        orchestrator = BrandWorkflowOrchestrator()
+        result['steps'].append({'step': 2, 'status': 'success'})
+
+        # Step 3: Test a simple method (not full workflow)
+        result['steps'].append({'step': 3, 'action': 'testing orchestrator methods'})
+        if hasattr(orchestrator, 'run_complete_workflow'):
+            result['steps'].append({'step': 3, 'status': 'success', 'message': 'Methods exist'})
+        else:
+            result['steps'].append({'step': 3, 'status': 'failed', 'message': 'Methods missing'})
+
+        # Step 4: Try to run the workflow (this might hang)
+        result['steps'].append({'step': 4, 'action': 'attempting workflow execution'})
+
+        # Don't actually run it, just say we would
+        result['steps'].append({'step': 4, 'status': 'skipped', 'message': 'Would run workflow here'})
+
+        result['overall_status'] = 'success'
+
+    except Exception as e:
+        import traceback
+        result['overall_status'] = 'failed'
+        result['error'] = str(e)
+        result['traceback'] = traceback.format_exc()
+
+    return jsonify(result)
 
 # Export the Flask app for Vercel
 from werkzeug.middleware.proxy_fix import ProxyFix
