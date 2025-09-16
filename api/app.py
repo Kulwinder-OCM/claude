@@ -573,18 +573,58 @@ def results(session_id):
 @app.route('/status/<session_id>')
 def status(session_id):
     """API endpoint to check workflow status."""
-    if session_id not in workflow_results:
-        return jsonify({'error': 'Session not found'}), 404
+    try:
+        if session_id not in workflow_results:
+            return jsonify({
+                'error': 'Session not found',
+                'session_id': session_id,
+                'available_sessions': list(workflow_results.keys())
+            }), 404
 
-    results = workflow_results[session_id]
-    return jsonify({
-        'status': results.get('workflow_status', 'unknown'),
-        'phases': results.get('phases', {}),
-        'url': results.get('url', ''),
-        'error': results.get('error'),
-        'traceback': results.get('traceback'),
-        'debug_info': results.get('debug_info', {})
-    })
+        results = workflow_results[session_id]
+
+        # Create a simplified response to avoid JSON serialization issues
+        response_data = {
+            'session_id': session_id,
+            'status': results.get('workflow_status', 'unknown'),
+            'url': results.get('url', ''),
+            'progress': results.get('progress', 0),
+            'message': results.get('message', ''),
+            'timestamp': results.get('timestamp', time.time())
+        }
+
+        # Add phases info if available
+        if results.get('phases'):
+            response_data['phases_count'] = len(results['phases'])
+            response_data['phases_summary'] = {}
+            for phase_name, phase_data in results['phases'].items():
+                response_data['phases_summary'][phase_name] = {
+                    'status': phase_data.get('status', 'unknown'),
+                    'message': phase_data.get('message', '')
+                }
+
+        # Add error info if available (but keep it simple)
+        if results.get('error'):
+            response_data['error'] = str(results['error'])[:500]  # Limit error length
+
+        # Add debug info if available (but simplified)
+        if results.get('debug_info'):
+            debug_info = results['debug_info']
+            response_data['debug'] = {
+                'src_exists': debug_info.get('src_exists', False),
+                'orchestrator_exists': debug_info.get('orchestrator_exists', False),
+                'env_vars': debug_info.get('env_vars', {})
+            }
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        # Fallback in case of JSON serialization errors
+        return jsonify({
+            'error': f'Status endpoint error: {str(e)}',
+            'session_id': session_id,
+            'timestamp': time.time()
+        }), 500
 
 @app.route('/download/<path:filepath>')
 def download_image(filepath):
@@ -699,6 +739,23 @@ def test():
         test_results['traceback'] = traceback.format_exc()
 
     return jsonify(test_results)
+
+@app.route('/status-test/<session_id>')
+def status_test(session_id):
+    """Simple status test to see what's in the session."""
+    if session_id not in workflow_results:
+        return f"Session {session_id} not found. Available: {list(workflow_results.keys())}"
+
+    results = workflow_results[session_id]
+    return f"""
+    Session: {session_id}
+    Status: {results.get('workflow_status', 'unknown')}
+    Progress: {results.get('progress', 0)}%
+    Message: {results.get('message', 'No message')}
+    URL: {results.get('url', 'No URL')}
+    Has Phases: {'Yes' if results.get('phases') else 'No'}
+    Keys: {list(results.keys())}
+    """
 
 @app.route('/simple-test')
 def simple_test():
