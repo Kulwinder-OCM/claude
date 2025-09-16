@@ -29,6 +29,147 @@ app.secret_key = 'claude-life-secret-key-2025'
 # Global variable to store workflow results
 workflow_results = {}
 
+def run_serverless_workflow(url, orchestrator, session_id):
+    """Custom serverless-compatible workflow that doesn't hang."""
+    print(f"Starting serverless workflow for {url}")
+
+    results = {
+        "url": url,
+        "workflow_status": "in_progress",
+        "phases": {}
+    }
+
+    try:
+        # Phase 1: Business Intelligence (using the orchestrator's business analyzer)
+        print("Phase 1: Business Intelligence Analysis")
+        workflow_results[session_id].update({
+            'message': 'Analyzing business intelligence...',
+            'progress': 60
+        })
+
+        try:
+            # Get business analyzer from orchestrator
+            business_intel = orchestrator.business_analyzer.process(url)
+            results["phases"]["business_intel"] = {
+                "status": "completed" if "error" not in business_intel else "failed",
+                "message": "Business analysis completed successfully",
+                "data": business_intel
+            }
+            print("✓ Business Intelligence completed")
+        except Exception as e:
+            print(f"Business Intelligence failed: {e}")
+            results["phases"]["business_intel"] = {
+                "status": "failed",
+                "message": f"Business analysis failed: {str(e)}",
+                "data": {}
+            }
+
+        # Phase 2: Design Analysis
+        print("Phase 2: Design Analysis")
+        workflow_results[session_id].update({
+            'message': 'Analyzing website design...',
+            'progress': 70
+        })
+
+        try:
+            design_analysis = orchestrator.screenshot_analyzer.process(url)
+            results["phases"]["design_analysis"] = {
+                "status": "completed" if "error" not in design_analysis else "failed",
+                "message": "Design analysis completed successfully",
+                "data": design_analysis
+            }
+            print("✓ Design Analysis completed")
+        except Exception as e:
+            print(f"Design Analysis failed: {e}")
+            results["phases"]["design_analysis"] = {
+                "status": "failed",
+                "message": f"Design analysis failed: {str(e)}",
+                "data": {}
+            }
+
+        # Phase 3: Social Content Creation
+        print("Phase 3: Social Content Creation")
+        workflow_results[session_id].update({
+            'message': 'Creating social media content...',
+            'progress': 80
+        })
+
+        try:
+            social_content = orchestrator.content_creator.process(
+                url,
+                business_intel=results["phases"].get("business_intel", {}).get("data", {}),
+                design_analysis=results["phases"].get("design_analysis", {}).get("data", {})
+            )
+            results["phases"]["social_content"] = {
+                "status": "completed" if "error" not in social_content else "failed",
+                "message": "Social content created successfully",
+                "data": social_content
+            }
+            print("✓ Social Content Creation completed")
+        except Exception as e:
+            print(f"Social Content Creation failed: {e}")
+            results["phases"]["social_content"] = {
+                "status": "failed",
+                "message": f"Social content creation failed: {str(e)}",
+                "data": {}
+            }
+
+        # Phase 4: Brand Images
+        print("Phase 4: Brand Image Generation")
+        workflow_results[session_id].update({
+            'message': 'Generating brand images...',
+            'progress': 90
+        })
+
+        try:
+            # First generate prompts
+            instagram_prompts = orchestrator.prompt_generator.process(
+                url,
+                social_content=results["phases"].get("social_content", {}).get("data", {})
+            )
+
+            # Then generate images
+            brand_images = orchestrator.image_generator.process(
+                url,
+                prompts_data=instagram_prompts
+            )
+
+            results["phases"]["brand_images"] = {
+                "status": "completed" if "error" not in brand_images else "failed",
+                "message": f"Generated {len(brand_images.get('images', []))} brand images",
+                "data": brand_images
+            }
+            print("✓ Brand Image Generation completed")
+        except Exception as e:
+            print(f"Brand Image Generation failed: {e}")
+            results["phases"]["brand_images"] = {
+                "status": "failed",
+                "message": f"Brand image generation failed: {str(e)}",
+                "data": {}
+            }
+
+        # Final status
+        completed_phases = sum(1 for phase in results["phases"].values() if phase.get("status") == "completed")
+        total_phases = len(results["phases"])
+
+        if completed_phases == total_phases:
+            results["workflow_status"] = "completed"
+        elif completed_phases > 0:
+            results["workflow_status"] = "completed_with_errors"
+        else:
+            results["workflow_status"] = "failed"
+
+        print(f"Serverless workflow completed: {completed_phases}/{total_phases} phases successful")
+        return results
+
+    except Exception as e:
+        print(f"Serverless workflow error: {e}")
+        import traceback
+        results["workflow_status"] = "failed"
+        results["error"] = str(e)
+        results["traceback"] = traceback.format_exc()
+        return results
+
 @app.route('/')
 def index():
     """Main page with form for URL input and AI model selection."""
@@ -205,18 +346,9 @@ def analyze():
                 'progress': 30
             })
 
-            # Try to run workflow with progress updates
+            # Try to run workflow with custom implementation to avoid hanging
             try:
-                print("Running complete workflow...")
-
-                # Run with shorter timeout and progress tracking
-                def run_with_progress():
-                    try:
-                        results = orchestrator.run_complete_workflow(url)
-                        return results
-                    except Exception as e:
-                        print(f"Workflow execution error: {e}")
-                        raise e
+                print("Running custom serverless workflow...")
 
                 # Update progress during workflow
                 workflow_results[session_id].update({
@@ -225,8 +357,9 @@ def analyze():
                     'progress': 50
                 })
 
-                results = run_with_progress()
-                print(f"✓ Workflow completed. Status: {results.get('workflow_status', 'unknown')}")
+                # Run a simplified custom workflow instead of the full orchestrator
+                results = run_serverless_workflow(url, orchestrator, session_id)
+                print(f"✓ Custom workflow completed. Status: {results.get('workflow_status', 'unknown')}")
 
                 # Ensure URL is in results
                 results['url'] = url
@@ -234,7 +367,7 @@ def analyze():
                 workflow_results[session_id] = results
 
             except Exception as e:
-                raise Exception(f"Workflow execution failed: {str(e)}")
+                raise Exception(f"Custom workflow execution failed: {str(e)}")
 
         except Exception as e:
             print(f"✗ Workflow error: {e}")
