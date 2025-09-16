@@ -199,6 +199,91 @@ def results(session_id):
                 phases_html += '</li>'
             phases_html += "</ul>"
 
+        # Create detailed HTML fallback with actual data
+        business_data = ""
+        social_data = ""
+        design_data = ""
+        images_data = ""
+
+        if results_data.get('phases'):
+            # Business Intelligence
+            if 'business_intel' in results_data['phases']:
+                bi_phase = results_data['phases']['business_intel']
+                if bi_phase.get('data'):
+                    bi_data = bi_phase['data']
+                    business_data = f"""
+                    <div class="card mt-3">
+                        <div class="card-header bg-info text-white">
+                            <h5>Business Intelligence Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Company:</strong> {bi_data.get('company_name', 'N/A')}</p>
+                            <p><strong>Description:</strong> {bi_data.get('description', 'N/A')}</p>
+                            <p><strong>Industry:</strong> {bi_data.get('industry', 'N/A')}</p>
+                            <p><strong>Products/Services:</strong> {', '.join(bi_data.get('products_services', []))}</p>
+                        </div>
+                    </div>
+                    """
+
+            # Social Content
+            if 'social_content' in results_data['phases']:
+                sc_phase = results_data['phases']['social_content']
+                if sc_phase.get('data') and 'posts' in sc_phase['data']:
+                    posts = sc_phase['data']['posts']
+                    social_data = f"""
+                    <div class="card mt-3">
+                        <div class="card-header bg-success text-white">
+                            <h5>Social Media Content Strategy</h5>
+                        </div>
+                        <div class="card-body">
+                    """
+                    for i, post in enumerate(posts[:3], 1):
+                        social_data += f"<p><strong>Post {i}:</strong> {post.get('concept', 'N/A')}</p>"
+                        social_data += f"<p><em>Caption:</em> {post.get('caption', 'N/A')[:200]}...</p>"
+                    social_data += "</div></div>"
+
+            # Design Analysis
+            if 'design_analysis' in results_data['phases']:
+                da_phase = results_data['phases']['design_analysis']
+                if da_phase.get('data'):
+                    da_data = da_phase['data']
+                    design_data = f"""
+                    <div class="card mt-3">
+                        <div class="card-header bg-warning text-white">
+                            <h5>Design Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Colors:</strong> {', '.join(da_data.get('colors', []))}</p>
+                            <p><strong>Fonts:</strong> {', '.join(da_data.get('fonts', []))}</p>
+                            <p><strong>Visual Style:</strong> {da_data.get('visual_style', 'N/A')}</p>
+                        </div>
+                    </div>
+                    """
+
+            # Brand Images
+            if 'brand_images' in results_data['phases']:
+                bi_phase = results_data['phases']['brand_images']
+                if bi_phase.get('data') and 'images' in bi_phase['data']:
+                    images = bi_phase['data']['images']
+                    images_data = f"""
+                    <div class="card mt-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5>Generated Images ({len(images)} images)</h5>
+                        </div>
+                        <div class="card-body">
+                    """
+                    for img in images:
+                        if img.get('generation_status') == 'success':
+                            images_data += f"""
+                            <div class="mb-3">
+                                <h6>{img.get('concept', 'Brand Image')}</h6>
+                                <p><strong>File:</strong> {img.get('filename', 'N/A')}</p>
+                                <p><strong>Status:</strong> Successfully generated</p>
+                                <a href="/download/{img.get('filepath', '')}" class="btn btn-sm btn-outline-primary">Download</a>
+                            </div>
+                            """
+                    images_data += "</div></div>"
+
         return f'''
         <!DOCTYPE html>
         <html>
@@ -213,6 +298,11 @@ def results(session_id):
                     <h4>Analysis Results for: {results_data.get('url', 'Unknown URL')}</h4>
                     <p><strong>Status:</strong> {results_data.get('workflow_status', 'unknown')}</p>
                 </div>
+
+                {business_data}
+                {social_data}
+                {design_data}
+                {images_data}
 
                 {phases_html}
 
@@ -236,10 +326,30 @@ def status(session_id):
         return jsonify({'error': 'Session not found'}), 404
     
     results = workflow_results[session_id]
+
+    # Add debug information to see actual data structure
+    debug_info = {
+        'keys_in_results': list(results.keys()) if isinstance(results, dict) else 'Not a dict',
+        'has_phases': 'phases' in results if isinstance(results, dict) else False,
+        'workflow_status': results.get('workflow_status', 'missing'),
+        'result_type': str(type(results))
+    }
+
+    if results.get('phases'):
+        debug_info['phase_keys'] = list(results['phases'].keys())
+        for phase_name, phase_data in results['phases'].items():
+            if isinstance(phase_data, dict):
+                debug_info[f'{phase_name}_keys'] = list(phase_data.keys())
+                debug_info[f'{phase_name}_has_data'] = 'data' in phase_data
+                if phase_data.get('data') and isinstance(phase_data['data'], dict):
+                    debug_info[f'{phase_name}_data_keys'] = list(phase_data['data'].keys())
+
     return jsonify({
         'status': results.get('workflow_status', 'unknown'),
         'phases': results.get('phases', {}),
-        'error': results.get('error')
+        'url': results.get('url', ''),
+        'error': results.get('error'),
+        'debug': debug_info
     })
 
 @app.route('/download/<path:filepath>')
