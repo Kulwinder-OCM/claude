@@ -943,6 +943,102 @@ def simple_test():
 
     return jsonify(result)
 
+@app.route('/test-ai/<path:test_url>')
+def test_ai(test_url):
+    """Test individual AI components to see what's failing."""
+    if not test_url.startswith('http'):
+        test_url = f"https://{test_url}"
+
+    results = {
+        'test_url': test_url,
+        'timestamp': time.time(),
+        'tests': []
+    }
+
+    # Test 1: Try to import and create business analyzer
+    try:
+        results['tests'].append({'step': 1, 'action': 'importing business analyzer'})
+        from agents.business_intelligence_analyzer import BusinessIntelligenceAnalyzer
+        results['tests'].append({'step': 1, 'status': 'success'})
+
+        # Test 2: Try to create instance
+        results['tests'].append({'step': 2, 'action': 'creating analyzer instance'})
+        analyzer = BusinessIntelligenceAnalyzer()
+        results['tests'].append({'step': 2, 'status': 'success'})
+
+        # Test 3: Try to process a simple URL
+        results['tests'].append({'step': 3, 'action': f'processing {test_url}'})
+
+        try:
+            # Try to process
+            business_data = analyzer.process(test_url)
+
+            results['tests'].append({
+                'step': 3,
+                'status': 'success',
+                'data_type': str(type(business_data)),
+                'data_keys': list(business_data.keys()) if isinstance(business_data, dict) else 'not dict',
+                'data_preview': str(business_data)[:500],
+                'has_error': 'error' in business_data if isinstance(business_data, dict) else False
+            })
+
+        except Exception as e:
+            import traceback
+            results['tests'].append({'step': 3, 'status': 'failed', 'error': str(e), 'traceback': traceback.format_exc()})
+
+    except Exception as e:
+        import traceback
+        results['tests'].append({'step': 'import', 'status': 'failed', 'error': str(e), 'traceback': traceback.format_exc()})
+
+    # Format as HTML for easy reading
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>AI Component Test</title>
+        <style>
+            body {{ font-family: monospace; margin: 20px; }}
+            .test {{ margin: 10px 0; padding: 10px; border: 1px solid #ccc; }}
+            .success {{ border-color: green; background: #f0fff0; }}
+            .failed {{ border-color: red; background: #fff0f0; }}
+            pre {{ background: #f5f5f5; padding: 10px; white-space: pre-wrap; }}
+        </style>
+    </head>
+    <body>
+        <h1>AI Component Test Results</h1>
+        <p><strong>Test URL:</strong> {test_url}</p>
+        <p><strong>Timestamp:</strong> {results['timestamp']}</p>
+
+        <h2>Test Steps:</h2>
+    """
+
+    for test in results['tests']:
+        status = test.get('status', 'unknown')
+        css_class = status if status in ['success', 'failed'] else 'test'
+
+        html += f'<div class="test {css_class}">'
+        html += f'<h3>Step {test.get("step", "?")}: {test.get("action", "unknown action")}</h3>'
+        html += f'<p><strong>Status:</strong> {status}</p>'
+
+        if test.get('error'):
+            html += f'<p><strong>Error:</strong> {test["error"]}</p>'
+        if test.get('traceback'):
+            html += f'<h4>Full Traceback:</h4><pre>{test["traceback"]}</pre>'
+        if test.get('data_preview'):
+            html += f'<h4>Data Preview:</h4><pre>{test["data_preview"]}</pre>'
+        if test.get('data_keys'):
+            html += f'<p><strong>Data Keys:</strong> {test["data_keys"]}</p>'
+
+        html += '</div>'
+
+    html += """
+        <p><a href="/">Back to Home</a></p>
+    </body>
+    </html>
+    """
+
+    return html
+
 # Export the Flask app for Vercel
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
