@@ -125,16 +125,53 @@ def analyze():
     # Start workflow in background thread
     def run_workflow():
         try:
+            print(f"=== Starting workflow for {url} ===")
+
+            # Test basic imports first
+            try:
+                from orchestrator import BrandWorkflowOrchestrator
+                print("✓ Successfully imported BrandWorkflowOrchestrator")
+            except Exception as e:
+                print(f"✗ Failed to import BrandWorkflowOrchestrator: {e}")
+                raise e
+
+            # Test environment variables
+            import os
+            print(f"✓ Environment variables:")
+            print(f"  CLAUDE_API_KEY: {'Set' if os.getenv('CLAUDE_API_KEY') else 'Missing'}")
+            print(f"  GEMINI_API_KEY: {'Set' if os.getenv('GEMINI_API_KEY') else 'Missing'}")
+            print(f"  SCREENSHOT_API_KEY: {'Set' if os.getenv('SCREENSHOT_API_KEY') else 'Missing'}")
+
+            # Initialize orchestrator
+            print("Initializing BrandWorkflowOrchestrator...")
             orchestrator = BrandWorkflowOrchestrator()
+            print("✓ BrandWorkflowOrchestrator initialized")
+
+            # Run workflow
+            print("Running complete workflow...")
             results = orchestrator.run_complete_workflow(url)
+            print(f"✓ Workflow completed. Status: {results.get('workflow_status', 'unknown')}")
+            print(f"✓ Phases: {list(results.get('phases', {}).keys())}")
+
             workflow_results[session_id] = results
+
         except Exception as e:
-            print(f"Workflow error: {e}")
+            print(f"✗ Workflow error: {e}")
             import traceback
+            error_details = traceback.format_exc()
+            print(f"✗ Full traceback: {error_details}")
+
             workflow_results[session_id] = {
                 'error': str(e),
                 'workflow_status': 'failed',
-                'traceback': traceback.format_exc()
+                'url': url,
+                'traceback': error_details,
+                'debug_info': {
+                    'python_path': sys.path,
+                    'current_dir': str(Path(__file__).parent),
+                    'src_exists': (Path(__file__).parent.parent / "src").exists(),
+                    'orchestrator_exists': (Path(__file__).parent.parent / "src" / "orchestrator.py").exists()
+                }
             }
 
     # Start the workflow
@@ -325,7 +362,10 @@ def status(session_id):
     return jsonify({
         'status': results.get('workflow_status', 'unknown'),
         'phases': results.get('phases', {}),
-        'error': results.get('error')
+        'url': results.get('url', ''),
+        'error': results.get('error'),
+        'traceback': results.get('traceback'),
+        'debug_info': results.get('debug_info', {})
     })
 
 @app.route('/download/<path:filepath>')
@@ -347,20 +387,89 @@ def download_image(filepath):
 @app.route('/providers')
 def providers():
     """API endpoint to get available providers."""
-    available = AIProviderFactory.list_available_providers()
-    configured = config.get_available_providers()
+    try:
+        available = AIProviderFactory.list_available_providers()
+        configured = config.get_available_providers()
 
-    result = {}
-    for provider, status in available.items():
-        if status.get("available") and configured.get(provider, False):
-            result[provider] = {
-                'available': True,
-                'capabilities': status.get('capabilities', [])
-            }
-        else:
-            result[provider] = {'available': False}
+        result = {}
+        for provider, status in available.items():
+            if status.get("available") and configured.get(provider, False):
+                result[provider] = {
+                    'available': True,
+                    'capabilities': status.get('capabilities', [])
+                }
+            else:
+                result[provider] = {'available': False}
 
-    return jsonify(result)
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+            'debug': 'Failed to load AI providers'
+        })
+
+@app.route('/test')
+def test():
+    """Test endpoint to check if basic imports work."""
+    test_results = {
+        'status': 'testing',
+        'timestamp': time.time()
+    }
+
+    # Test imports
+    try:
+        import sys
+        test_results['python_path'] = sys.path[:3]  # First 3 entries
+        test_results['current_dir'] = str(Path(__file__).parent)
+        test_results['parent_dir'] = str(Path(__file__).parent.parent)
+
+        # Check if src directory exists
+        src_path = Path(__file__).parent.parent / "src"
+        test_results['src_exists'] = src_path.exists()
+
+        if src_path.exists():
+            test_results['src_contents'] = [f.name for f in src_path.iterdir() if f.is_file()][:10]
+
+        # Test orchestrator import
+        try:
+            from orchestrator import BrandWorkflowOrchestrator
+            test_results['orchestrator_import'] = 'success'
+        except Exception as e:
+            test_results['orchestrator_import'] = f'failed: {str(e)}'
+
+        # Test config import
+        try:
+            from config import config
+            test_results['config_import'] = 'success'
+        except Exception as e:
+            test_results['config_import'] = f'failed: {str(e)}'
+
+        # Test AI factory import
+        try:
+            from ai_providers.ai_factory import AIProviderFactory
+            test_results['ai_factory_import'] = 'success'
+        except Exception as e:
+            test_results['ai_factory_import'] = f'failed: {str(e)}'
+
+        # Environment variables
+        import os
+        test_results['env_vars'] = {
+            'CLAUDE_API_KEY': 'set' if os.getenv('CLAUDE_API_KEY') else 'missing',
+            'GEMINI_API_KEY': 'set' if os.getenv('GEMINI_API_KEY') else 'missing',
+            'SCREENSHOT_API_KEY': 'set' if os.getenv('SCREENSHOT_API_KEY') else 'missing'
+        }
+
+        test_results['status'] = 'completed'
+
+    except Exception as e:
+        import traceback
+        test_results['status'] = 'failed'
+        test_results['error'] = str(e)
+        test_results['traceback'] = traceback.format_exc()
+
+    return jsonify(test_results)
 
 # Export the Flask app for Vercel
 from werkzeug.middleware.proxy_fix import ProxyFix
