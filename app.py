@@ -133,18 +133,39 @@ def status(session_id):
     })
 
 @app.route('/download/<path:filepath>')
-def download_image(filepath): 
+def download_image(filepath):
     """Download generated images."""
     try:
         # Security: ensure the file is in the metrics directory
-        full_path = Path(__file__).parent / filepath
-        if not str(full_path).startswith(str(Path(__file__).parent / 'metrics')):
+        if not filepath.startswith('metrics/'):
             return "Access denied", 403
-        
-        if full_path.exists() and full_path.is_file():
+
+        # Get absolute path
+        base_dir = Path(__file__).parent.absolute()
+        full_path = base_dir / filepath
+
+        # Additional security check
+        if not str(full_path.resolve()).startswith(str(base_dir / 'metrics')):
+            return "Access denied", 403
+
+        # Debug info for troubleshooting
+        if not full_path.exists():
+            # List available files for debugging
+            metrics_dir = base_dir / 'metrics'
+            if metrics_dir.exists():
+                available_files = []
+                for f in metrics_dir.rglob('*'):
+                    if f.is_file():
+                        available_files.append(str(f.relative_to(base_dir)))
+                return f"File not found: {filepath}. Available files: {available_files[:10]}", 404
+            else:
+                return f"Metrics directory not found at: {metrics_dir}", 404
+
+        if full_path.is_file():
             return send_file(full_path, as_attachment=True)
         else:
-            return "File not found", 404
+            return f"Path exists but is not a file: {full_path}", 404
+
     except Exception as e:
         return f"Error downloading file: {str(e)}", 500
 
