@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Brand Analysis & Campaign Generator</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        .section-spacing {
+            margin: 4rem 0;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .loading-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 9998;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Backdrop -->
+    <div class="loading-backdrop" id="loadingBackdrop"></div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5>Analyzing Website...</h5>
+        <p class="text-muted mb-0">This may take a few minutes</p>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Hero Section -->
+                <div class="text-center section-spacing">
+                    <h1 class="mb-4">AI Brand Analysis & Campaign Generator</h1>
+                    <p class="lead">
+                        Transform any website into a comprehensive brand analysis with AI-powered insights
+                        and professional Instagram-ready images.
+                    </p>
+                </div>
+
+                <!-- Main Form Card -->
+                <div class="card">
+                    <div class="card-body">
+                        <form id="analysisForm">
+                            <!-- URL Input Section -->
+                            <div class="mb-4">
+                                <label for="url" class="form-label">
+                                    <i class="fas fa-globe me-2 text-primary"></i>
+                                    Website URL
+                                </label>
+                                <input type="url" class="form-control form-control-lg" id="url" name="url"
+                                       placeholder="https://example.com" required>
+                                <div class="form-text">
+                                    Enter the complete URL of the website you want to analyze
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-center mb-4">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-magic me-2"></i>
+                                    Generate Brand Campaign
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Results Section -->
+                        <div id="results" style="display: none;">
+                            <hr class="my-4">
+                            <h3>Analysis Results</h3>
+                            <div id="resultsContent"></div>
+                        </div>
+
+                        <!-- Error Section -->
+                        <div id="error" style="display: none;">
+                            <hr class="my-4">
+                            <div class="alert alert-danger" role="alert">
+                                <h4 class="alert-heading">Error!</h4>
+                                <p id="errorMessage"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Section -->
+                <div class="section-spacing">
+                    <h2 class="text-center mb-4">What You'll Get</h2>
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="mb-3">
+                                <i class="fas fa-chart-pie fa-3x text-primary"></i>
+                            </div>
+                            <h5>Business Intelligence</h5>
+                            <p class="text-muted">
+                                Comprehensive analysis of company overview, services, target market,
+                                and competitive positioning.
+                            </p>
+                        </div>
+
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="mb-3">
+                                <i class="fas fa-palette fa-3x text-success"></i>
+                            </div>
+                            <h5>Design Analysis</h5>
+                            <p class="text-muted">
+                                Extract brand colors, typography, layout patterns, and visual design
+                                elements from the website.
+                            </p>
+                        </div>
+
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="mb-3">
+                                <i class="fas fa-images fa-3x text-warning"></i>
+                            </div>
+                            <h5>Instagram Images</h5>
+                            <p class="text-muted">
+                                Three professional 1080x1080 images ready for Instagram posting,
+                                generated with Google Gemini AI.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Process Section -->
+                <div class="section-spacing">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="mb-0">How It Works</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="mb-3">
+                                        <span class="badge bg-primary rounded-circle p-3 fs-5">1</span>
+                                    </div>
+                                    <h6>Website Analysis</h6>
+                                    <p class="small text-muted">AI analyzes your website content and design</p>
+                                </div>
+
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="mb-3">
+                                        <span class="badge bg-success rounded-circle p-3 fs-5">2</span>
+                                    </div>
+                                    <h6>Content Strategy</h6>
+                                    <p class="small text-muted">Creates targeted social media strategy</p>
+                                </div>
+
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="mb-3">
+                                        <span class="badge bg-warning rounded-circle p-3 fs-5">3</span>
+                                    </div>
+                                    <h6>Image Generation</h6>
+                                    <p class="small text-muted">Generates professional Instagram images</p>
+                                </div>
+
+                                <div class="col-md-3 text-center mb-3">
+                                    <div class="mb-3">
+                                        <span class="badge bg-info rounded-circle p-3 fs-5">4</span>
+                                    </div>
+                                    <h6>Download & Use</h6>
+                                    <p class="small text-muted">Download your ready-to-post images</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const url = document.getElementById('url').value;
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const loadingBackdrop = document.getElementById('loadingBackdrop');
+            const resultsDiv = document.getElementById('results');
+            const errorDiv = document.getElementById('error');
+
+            // Show loading
+            loadingSpinner.style.display = 'block';
+            loadingBackdrop.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/.netlify/functions/app', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Display results
+                    document.getElementById('resultsContent').innerHTML = `
+                        <div class="alert alert-success">
+                            <h4>Analysis Complete!</h4>
+                            <p>Brand analysis has been generated successfully for <strong>${url}</strong></p>
+                            <p>Check your metrics folder for the generated files and images.</p>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Generated Files:</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item"><i class="fas fa-file-code me-2"></i>Business Intelligence Analysis</li>
+                                    <li class="list-group-item"><i class="fas fa-palette me-2"></i>Design & Brand Analysis</li>
+                                    <li class="list-group-item"><i class="fas fa-bullhorn me-2"></i>Social Media Strategy</li>
+                                    <li class="list-group-item"><i class="fas fa-images me-2"></i>Instagram Images (3 images)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    resultsDiv.style.display = 'block';
+                } else {
+                    document.getElementById('errorMessage').textContent = result.error || 'An unknown error occurred.';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error: ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                // Hide loading
+                loadingSpinner.style.display = 'none';
+                loadingBackdrop.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

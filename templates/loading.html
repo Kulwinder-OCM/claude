@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="gradient-bg">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        
+                        <h2 class="mb-3">AI Analysis in Progress</h2>
+                        <p class="text-muted mb-4">Our AI models are working hard to analyze your website and generate your brand campaign...</p>
+                        
+                        <div class="progress mb-4">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%" id="progress-bar"></div>
+                        </div>
+                        
+                        <div id="status-text" class="text-muted">
+                            <i class="fas fa-clock me-2"></i>Starting analysis...
+                        </div>
+                        
+                        <div class="mt-4">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                This process typically takes 1-2 minutes
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Cards -->
+                <div class="row mt-4" id="progress-cards">
+                    <div class="col-md-4 mb-3">
+                        <div class="card" id="card-business">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-pie fa-2x text-muted mb-2"></i>
+                                <h6>Business Intelligence</h6>
+                                <small class="text-muted">Pending...</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card" id="card-design">
+                            <div class="card-body text-center">
+                                <i class="fas fa-palette fa-2x text-muted mb-2"></i>
+                                <h6>Design Analysis</h6>
+                                <small class="text-muted">Pending...</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card" id="card-content">
+                            <div class="card-body text-center">
+                                <i class="fas fa-pen-fancy fa-2x text-muted mb-2"></i>
+                                <h6>Social Content</h6>
+                                <small class="text-muted">Pending...</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card" id="card-prompts">
+                            <div class="card-body text-center">
+                                <i class="fas fa-lightbulb fa-2x text-muted mb-2"></i>
+                                <h6>Instagram Prompts</h6>
+                                <small class="text-muted">Pending...</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card" id="card-images">
+                            <div class="card-body text-center">
+                                <i class="fas fa-images fa-2x text-muted mb-2"></i>
+                                <h6>Image Generation</h6>
+                                <small class="text-muted">Pending...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let sessionId = "{{ session_id }}";
+let completedPhases = 0;
+let totalPhases = 5;
+
+function updateProgress() {
+    fetch(`/status/${sessionId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'completed' || data.status === 'completed_with_errors') {
+                window.location.href = `/results/${sessionId}`;
+                return;
+            }
+            
+            if (data.status === 'failed') {
+                document.getElementById('status-text').innerHTML = 
+                    '<i class="fas fa-exclamation-triangle me-2 text-danger"></i>Analysis failed: ' + (data.error || 'Unknown error');
+                return;
+            }
+            
+            // Update progress based on completed phases
+            completedPhases = 0;
+            if (data.phases) {
+                Object.keys(data.phases).forEach(phase => {
+                    if (data.phases[phase].status === 'completed') {
+                        completedPhases++;
+                        updatePhaseCard(phase, 'completed');
+                    } else if (data.phases[phase].status === 'failed') {
+                        updatePhaseCard(phase, 'failed');
+                    }
+                });
+            }
+            
+            let progress = Math.round((completedPhases / totalPhases) * 100);
+            document.getElementById('progress-bar').style.width = progress + '%';
+            
+            if (completedPhases > 0) {
+                document.getElementById('status-text').innerHTML = 
+                    `<i class="fas fa-cog fa-spin me-2"></i>Completed ${completedPhases}/${totalPhases} phases...`;
+            }
+        })
+        .catch(error => {
+            console.error('Error checking status:', error);
+        });
+}
+
+function updatePhaseCard(phase, status) {
+    let cardId = '';
+    switch(phase) {
+        case 'business_intelligence': cardId = 'card-business'; break;
+        case 'design_analysis': cardId = 'card-design'; break;
+        case 'social_content': cardId = 'card-content'; break;
+        case 'instagram_prompts': cardId = 'card-prompts'; break;
+        case 'brand_images': cardId = 'card-images'; break;
+    }
+    
+    if (cardId) {
+        let card = document.getElementById(cardId);
+        let icon = card.querySelector('i');
+        let text = card.querySelector('small');
+        
+        if (status === 'completed') {
+            icon.className = icon.className.replace('text-muted', 'text-success');
+            text.innerHTML = '<span class="text-success">Completed ✓</span>';
+            card.classList.add('border-success');
+        } else if (status === 'failed') {
+            icon.className = icon.className.replace('text-muted', 'text-danger');
+            text.innerHTML = '<span class="text-danger">Failed ✗</span>';
+            card.classList.add('border-danger');
+        }
+    }
+}
+
+// Check status every 2 seconds
+setInterval(updateProgress, 2000);
+updateProgress(); // Initial check
+</script>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Hero Section -->
+            <div class="text-center section-spacing">
+                <h1 class="mb-4">AI Brand Analysis & Campaign Generator</h1>
+                <p class="lead">
+                    Transform any website into a comprehensive brand analysis with AI-powered insights 
+                    and professional Instagram-ready images.
+                </p>
+            </div>
+
+            <!-- Main Form Card -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('analyze') }}">
+                        <!-- URL Input Section -->
+                        <div class="mb-4">
+                            <label for="url" class="form-label">
+                                <i class="fas fa-globe me-2 text-primary"></i>
+                                Website URL
+                            </label>
+                            <input type="url" class="form-control form-control-lg" id="url" name="url" 
+                                   placeholder="https://example.com" required>
+                            <div class="form-text">
+                                Enter the complete URL of the website you want to analyze
+                            </div>
+                        </div>
+
+                        <!-- AI Provider Configuration -->
+                        <div class="mb-4">
+                            <h3 class="mb-3">AI Provider Configuration</h3>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Note:</strong> Image generation always uses Google Gemini for optimal quality. 
+                                Configure other AI providers below for text analysis and content creation.
+                            </div>
+                        </div>
+
+                        <!-- Provider Selection Grid -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="text_analysis_provider" class="form-label">
+                                    <i class="fas fa-search me-2 text-success"></i>
+                                    Text Analysis Provider
+                                </label>
+                                <select class="form-select" id="text_analysis_provider" name="text_analysis_provider">
+                                    {% for provider in text_providers %}
+                                        <option value="{{ provider }}" {{ 'selected' if provider == 'claude' else '' }}>
+                                            {{ provider.title() }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Analyzes website content and extracts business information</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="text_generation_provider" class="form-label">
+                                    <i class="fas fa-pen-fancy me-2 text-primary"></i>
+                                    Text Generation Provider
+                                </label>
+                                <select class="form-select" id="text_generation_provider" name="text_generation_provider">
+                                    {% for provider in text_providers %}
+                                        <option value="{{ provider }}" {{ 'selected' if provider == 'claude' else '' }}>
+                                            {{ provider.title() }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Creates social media content and marketing copy</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="web_analysis_provider" class="form-label">
+                                    <i class="fas fa-chart-line me-2 text-info"></i>
+                                    Web Analysis Provider
+                                </label>
+                                <select class="form-select" id="web_analysis_provider" name="web_analysis_provider">
+                                    {% for provider in text_providers %}
+                                        {% if provider in ['claude', 'openai'] %}
+                                            <option value="{{ provider }}" {{ 'selected' if provider == 'claude' else '' }}>
+                                                {{ provider.title() }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Performs comprehensive website analysis</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="content_strategy_provider" class="form-label">
+                                    <i class="fas fa-lightbulb me-2 text-warning"></i>
+                                    Content Strategy Provider
+                                </label>
+                                <select class="form-select" id="content_strategy_provider" name="content_strategy_provider">
+                                    {% for provider in text_providers %}
+                                        {% if provider in ['claude', 'openai'] %}
+                                            <option value="{{ provider }}" {{ 'selected' if provider == 'claude' else '' }}>
+                                                {{ provider.title() }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Develops social media strategy and campaigns</div>
+                            </div>
+                        </div>
+
+                        <!-- Image Generation Info -->
+                        <div class="mb-4">
+                            <div class="card bg-light border-0">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title mb-2">
+                                        <i class="fas fa-image me-2 text-primary"></i>
+                                        Image Generation
+                                    </h6>
+                                    <p class="card-text mb-0">
+                                        <span class="badge bg-primary me-2">Google Gemini</span>
+                                        <small class="text-muted">Fixed provider for optimal Instagram image quality</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-center mb-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-magic me-2"></i>
+                                Generate Brand Campaign
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="section-spacing">
+                <h2 class="text-center mb-4">What You'll Get</h2>
+                <div class="row">
+                    <div class="col-md-4 text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-chart-pie fa-3x text-primary"></i>
+                        </div>
+                        <h5>Business Intelligence</h5>
+                        <p class="text-muted">
+                            Comprehensive analysis of company overview, services, target market, 
+                            and competitive positioning.
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-4 text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-palette fa-3x text-success"></i>
+                        </div>
+                        <h5>Design Analysis</h5>
+                        <p class="text-muted">
+                            Extract brand colors, typography, layout patterns, and visual design 
+                            elements from the website.
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-4 text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-images fa-3x text-warning"></i>
+                        </div>
+                        <h5>Instagram Images</h5>
+                        <p class="text-muted">
+                            Three professional 1080x1080 images ready for Instagram posting, 
+                            generated with Google Gemini AI.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process Section -->
+            <div class="section-spacing">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="mb-0">How It Works</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="mb-3">
+                                    <span class="badge bg-primary rounded-circle p-3 fs-5">1</span>
+                                </div>
+                                <h6>Website Analysis</h6>
+                                <p class="small text-muted">AI analyzes your website content and design</p>
+                            </div>
+                            
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="mb-3">
+                                    <span class="badge bg-success rounded-circle p-3 fs-5">2</span>
+                                </div>
+                                <h6>Content Strategy</h6>
+                                <p class="small text-muted">Creates targeted social media strategy</p>
+                            </div>
+                            
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="mb-3">
+                                    <span class="badge bg-warning rounded-circle p-3 fs-5">3</span>
+                                </div>
+                                <h6>Image Generation</h6>
+                                <p class="small text-muted">Generates professional Instagram images</p>
+                            </div>
+                            
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="mb-3">
+                                    <span class="badge bg-info rounded-circle p-3 fs-5">4</span>
+                                </div>
+                                <h6>Download & Use</h6>
+                                <p class="small text-muted">Download your ready-to-post images</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
