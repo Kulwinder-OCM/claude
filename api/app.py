@@ -50,7 +50,7 @@ def run_serverless_workflow(url, orchestrator, session_id):
         try:
             # Get business analyzer from orchestrator
             business_intel = orchestrator.business_analyzer.process(url)
-            results["phases"]["business_intel"] = {
+            results["phases"]["business_intelligence"] = {
                 "status": "completed" if "error" not in business_intel else "failed",
                 "message": "Business analysis completed successfully",
                 "data": business_intel
@@ -58,7 +58,7 @@ def run_serverless_workflow(url, orchestrator, session_id):
             print("✓ Business Intelligence completed")
         except Exception as e:
             print(f"Business Intelligence failed: {e}")
-            results["phases"]["business_intel"] = {
+            results["phases"]["business_intelligence"] = {
                 "status": "failed",
                 "message": f"Business analysis failed: {str(e)}",
                 "data": {}
@@ -97,7 +97,7 @@ def run_serverless_workflow(url, orchestrator, session_id):
         try:
             social_content = orchestrator.content_creator.process(
                 url,
-                business_intel=results["phases"].get("business_intel", {}).get("data", {}),
+                business_intel=results["phases"].get("business_intelligence", {}).get("data", {}),
                 design_analysis=results["phases"].get("design_analysis", {}).get("data", {})
             )
             results["phases"]["social_content"] = {
