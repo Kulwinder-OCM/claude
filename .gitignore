@@ -52,7 +52,11 @@ temp/
 *.log
 logs/
 
-# Generated metrics and output files
+# Generated metrics and output files (contain API keys/sensitive data)
 metrics/
 *.json
 *.png
+
+# Documentation files that may contain example API keys
+AI_PROVIDERS.md
+WEB_INTERFACE.md
