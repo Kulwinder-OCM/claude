@@ -1,25 +1,7 @@
 [build]
-  command = "pip install -r requirements.txt"
-  functions = "netlify/functions"
+  command = "echo 'Static site build'"
   publish = "static"
 
 [build.environment]
-  PYTHON_VERSION = "3.9"
   # Disable secrets scanning for expected configuration files and documentation
   SECRETS_SCAN_OMIT_PATHS = "metrics/**,*.md,templates/**,netlify.toml,.env"
-
-[[redirects]]
-  from = "/test"
-  to = "/.netlify/functions/simple-test"
-  status = 200
-
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/app"
-  status = 200
-  force = true
