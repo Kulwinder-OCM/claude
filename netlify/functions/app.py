@@ -1,6 +1,14 @@
+#!/usr/bin/env python3
+"""
+Netlify Function for Claude Life Brand Analysis
+Based on the Flask Web Application structure
+"""
+
+import sys
 import json
 import os
-import sys
+import time
+import threading
 from pathlib import Path
 from urllib.parse import parse_qs, unquote
 import base64
@@ -10,6 +18,14 @@ current_dir = Path(__file__).parent
 project_root = current_dir.parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "src"))
+
+# Import Flask app components (same as local app.py)
+from orchestrator import BrandWorkflowOrchestrator
+from ai_providers.ai_factory import AIProviderFactory
+from config import config
+
+# Global variable to store workflow results (same as local app.py)
+workflow_results = {}
 
 def handler(event, context):
     """Netlify function handler for the brand analysis application."""
@@ -26,18 +42,23 @@ def handler(event, context):
 
         print(f"Processing {method} {path}")
 
-        # Handle GET requests (main page, static content)
+        # Route handling - exact match to Flask app routes
         if method == 'GET':
             if path == '/' or path == '/index.html':
-                return serve_index_page()
+                return flask_index()
             elif path.startswith('/static/'):
                 return serve_static_file(path)
             elif path.startswith('/results/'):
                 session_id = path.split('/')[-1]
-                return serve_results_page(session_id)
+                return flask_results(session_id)
             elif path.startswith('/status/'):
                 session_id = path.split('/')[-1]
-                return serve_status_api(session_id)
+                return flask_status_api(session_id)
+            elif path.startswith('/download/'):
+                filepath = path.replace('/download/', '')
+                return flask_download_image(filepath)
+            elif path == '/providers':
+                return flask_providers_api()
             else:
                 return {
                     'statusCode': 404,
@@ -47,8 +68,8 @@ def handler(event, context):
 
         # Handle POST requests (form submissions)
         elif method == 'POST':
-            if path == '/analyze' or path == '/':
-                return handle_analyze_request(event)
+            if path == '/analyze':
+                return flask_analyze(event)
             else:
                 return {
                     'statusCode': 404,
@@ -92,71 +113,28 @@ def handler(event, context):
             'body': f'<h1>Internal Server Error</h1><p>{str(e)}</p><pre>{traceback.format_exc()}</pre>'
         }
 
-def serve_index_page():
-    """Serve the main index page with Flask template rendering."""
+# Flask route functions - exact duplicates from local app.py
+def flask_index():
+    """Main page with form for URL input and AI model selection - exact copy from Flask app."""
     try:
-        # Import Flask app components
-        from config import config
-        from ai_providers.ai_factory import AIProviderFactory
-
-        # Get available providers
+        # Get available providers (same as local app.py)
         available_providers = AIProviderFactory.list_available_providers()
         configured_providers = config.get_available_providers()
 
-        # Filter to only show configured providers
+        # Filter to only show configured providers (same as local app.py)
         text_providers = []
         for provider, status in available_providers.items():
             if status.get("available") and configured_providers.get(provider, False):
                 if provider in ["claude", "openai", "gemini"]:  # Text capable providers
                     text_providers.append(provider)
 
-        # Read template files
-        base_template_path = current_dir.parent.parent / 'templates' / 'base.html'
-        index_template_path = current_dir.parent.parent / 'templates' / 'index.html'
-
-        with open(base_template_path, 'r') as f:
-            base_content = f.read()
-        with open(index_template_path, 'r') as f:
-            index_content = f.read()
-
-        # Simple template rendering (replace Jinja2 syntax)
-        # Replace template extends and block syntax with actual content
-        rendered_content = base_content.replace('{% block content %}{% endblock %}',
-                                              index_content.replace('{% extends "base.html" %}', '').replace('{% block content %}', '').replace('{% endblock %}', ''))
-
-        # Replace template variables
-        rendered_content = rendered_content.replace("{{ url_for('analyze') }}", "/analyze")
-
-        # Replace provider loops with actual HTML
-        provider_options = ""
-        for provider in text_providers:
-            selected = 'selected' if provider == 'claude' else ''
-            provider_options += f'<option value="{provider}" {selected}>{provider.title()}</option>'
-
-        # Replace all provider loops in the template
-        import re
-        # Replace text analysis provider options
-        rendered_content = re.sub(
-            r'{% for provider in text_providers %}.*?{% endfor %}',
-            provider_options,
-            rendered_content,
-            flags=re.DOTALL
-        )
-
-        return {
-            'statusCode': 200,
-            'headers': {'Content-Type': 'text/html'},
-            'body': rendered_content
-        }
+        # Simple template rendering for serverless
+        return render_template_serverless('index.html', {'text_providers': text_providers})
     except Exception as e:
-        print(f"Error serving index: {e}")
+        print(f"Error in flask_index: {e}")
         import traceback
         traceback.print_exc()
-        return {
-            'statusCode': 500,
-            'headers': {'Content-Type': 'text/html'},
-            'body': f'<h1>Error loading page</h1><p>{str(e)}</p><pre>{traceback.format_exc()}</pre>'
-        }
+        return serve_error_page(f"Error loading page: {str(e)}")
 
 def serve_static_file(path):
     """Serve static files."""
@@ -209,15 +187,15 @@ def serve_static_file(path):
             'body': f'Error serving file: {str(e)}'
         }
 
-def handle_analyze_request(event):
-    """Handle the analyze form submission."""
+def flask_analyze(event):
+    """Handle URL analysis with selected AI providers - exact copy from Flask app."""
     try:
         # Parse request body
         body = event.get('body', '')
         if event.get('isBase64Encoded'):
             body = base64.b64decode(body).decode('utf-8')
 
-        # Parse form data
+        # Parse form data (same as request.form.get in Flask)
         form_data = parse_qs(body)
         url = form_data.get('url', [None])[0]
         text_analysis_provider = form_data.get('text_analysis_provider', ['claude'])[0]
@@ -226,48 +204,56 @@ def handle_analyze_request(event):
         content_strategy_provider = form_data.get('content_strategy_provider', ['claude'])[0]
 
         if not url:
+            # Same behavior as Flask app - redirect to index with error
             return serve_error_page('Please enter a valid URL')
 
-        # Set environment variables for this request
+        # Set environment variables for this request (same as local app.py)
         os.environ['AI_TEXT_ANALYSIS_PROVIDER'] = text_analysis_provider
         os.environ['AI_TEXT_GENERATION_PROVIDER'] = text_generation_provider
         os.environ['AI_WEB_ANALYSIS_PROVIDER'] = web_analysis_provider
         os.environ['AI_CONTENT_STRATEGY_PROVIDER'] = content_strategy_provider
 
-        print(f"Starting analysis for URL: {url} with providers: text={text_analysis_provider}, web={web_analysis_provider}")
-
-        # Import and run the orchestrator
-        from orchestrator import BrandWorkflowOrchestrator
-
-        orchestrator = BrandWorkflowOrchestrator()
-        results = orchestrator.run_complete_workflow(url)
-
-        # Generate session ID
-        import time
+        # Generate a unique session ID for this analysis (same as local app.py)
         session_id = f"{url.replace('https://', '').replace('http://', '').replace('/', '-').replace('.', '-')}-{int(time.time())}"
 
-        # Return results page
-        return serve_results_page_with_data(session_id, results)
+        # Start workflow in background thread (same as local app.py)
+        def run_workflow():
+            try:
+                orchestrator = BrandWorkflowOrchestrator()
+                results = orchestrator.run_complete_workflow(url)
+                workflow_results[session_id] = results
+            except Exception as e:
+                print(f"Workflow error: {e}")
+                workflow_results[session_id] = {'error': str(e), 'workflow_status': 'failed'}
+
+        # Start the workflow (same as local app.py)
+        workflow_results[session_id] = {'workflow_status': 'in_progress'}
+        thread = threading.Thread(target=run_workflow)
+        thread.daemon = True
+        thread.start()
+
+        # Redirect to results page (same as local app.py)
+        return redirect_to_results(session_id)
 
     except Exception as e:
-        print(f"Error in analyze handler: {e}")
+        print(f"Error in flask_analyze: {e}")
         import traceback
         traceback.print_exc()
         return serve_error_page(f"Analysis failed: {str(e)}")
 
-def serve_results_page_with_data(session_id, results):
-    """Serve results page with actual workflow results."""
+def flask_results(session_id):
+    """Display results page for a specific analysis session - exact copy from Flask app."""
     try:
-        # Read results template
-        results_template_path = current_dir.parent.parent / 'templates' / 'results.html'
-        base_template_path = current_dir.parent.parent / 'templates' / 'base.html'
+        if session_id not in workflow_results:
+            return serve_error_page('Analysis session not found')
 
-        with open(base_template_path, 'r') as f:
-            base_content = f.read()
-        with open(results_template_path, 'r') as f:
-            results_content = f.read()
+        results = workflow_results[session_id]
 
-        # Extract image information if available
+        # If still in progress, show loading page (same as local app.py)
+        if results['workflow_status'] == 'in_progress':
+            return render_template_serverless('loading.html', {'session_id': session_id})
+
+        # Extract image information if available (same as local app.py)
         images = []
         if ('phases' in results and
             'brand_images' in results['phases'] and
@@ -285,108 +271,177 @@ def serve_results_page_with_data(session_id, results):
                             'file_size': img.get('file_size', 0)
                         })
 
-        # Simple template rendering
+        return render_template_serverless('results.html', {
+            'results': results,
+            'session_id': session_id,
+            'images': images
+        })
+    except Exception as e:
+        print(f"Error in flask_results: {e}")
+        import traceback
+        traceback.print_exc()
+        return serve_error_page(f"Error displaying results: {str(e)}")
+
+def flask_status_api(session_id):
+    """API endpoint to check workflow status - exact copy from Flask app."""
+    if session_id not in workflow_results:
+        return {
+            'statusCode': 404,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': 'Session not found'})
+        }
+
+    results = workflow_results[session_id]
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({
+            'status': results.get('workflow_status', 'unknown'),
+            'phases': results.get('phases', {}),
+            'error': results.get('error')
+        })
+    }
+
+def flask_download_image(filepath):
+    """Download generated images - exact copy from Flask app."""
+    try:
+        # Security: ensure the file is in the metrics directory (same as local app.py)
+        full_path = project_root / filepath
+        if not str(full_path).startswith(str(project_root / 'metrics')):
+            return {
+                'statusCode': 403,
+                'headers': {'Content-Type': 'text/plain'},
+                'body': 'Access denied'
+            }
+
+        if full_path.exists() and full_path.is_file():
+            with open(full_path, 'rb') as f:
+                file_content = base64.b64encode(f.read()).decode()
+
+            # Determine content type
+            if filepath.endswith('.png'):
+                content_type = 'image/png'
+            elif filepath.endswith('.jpg') or filepath.endswith('.jpeg'):
+                content_type = 'image/jpeg'
+            else:
+                content_type = 'application/octet-stream'
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': content_type,
+                    'Content-Disposition': f'attachment; filename="{full_path.name}"'
+                },
+                'body': file_content,
+                'isBase64Encoded': True
+            }
+        else:
+            return {
+                'statusCode': 404,
+                'headers': {'Content-Type': 'text/plain'},
+                'body': 'File not found'
+            }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'text/plain'},
+            'body': f'Error downloading file: {str(e)}'
+        }
+
+def flask_providers_api():
+    """API endpoint to get available providers - exact copy from Flask app."""
+    try:
+        available = AIProviderFactory.list_available_providers()
+        configured = config.get_available_providers()
+
+        result = {}
+        for provider, status in available.items():
+            if status.get("available") and configured.get(provider, False):
+                result[provider] = {
+                    'available': True,
+                    'capabilities': status.get('capabilities', [])
+                }
+            else:
+                result[provider] = {'available': False}
+
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps(result)
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': str(e)})
+        }
+
+# Helper functions for serverless environment
+def redirect_to_results(session_id):
+    """Redirect to results page (serverless equivalent of Flask redirect)."""
+    return {
+        'statusCode': 302,
+        'headers': {
+            'Location': f'/results/{session_id}',
+            'Content-Type': 'text/html'
+        },
+        'body': f'<html><head><meta http-equiv="refresh" content="0;url=/results/{session_id}"></head><body>Redirecting...</body></html>'
+    }
+
+def render_template_serverless(template_name, context=None):
+    """Render templates for serverless environment (equivalent of Flask render_template)."""
+    try:
+        if context is None:
+            context = {}
+
+        # Read template files
+        base_template_path = project_root / 'templates' / 'base.html'
+        template_path = project_root / 'templates' / template_name
+
+        with open(base_template_path, 'r') as f:
+            base_content = f.read()
+        with open(template_path, 'r') as f:
+            template_content = f.read()
+
+        # Simple template rendering (replace Jinja2 syntax)
         rendered_content = base_content.replace('{% block content %}{% endblock %}',
-                                              results_content.replace('{% extends "base.html" %}', '').replace('{% block content %}', '').replace('{% endblock %}', ''))
+                                              template_content.replace('{% extends "base.html" %}', '').replace('{% block content %}', '').replace('{% endblock %}', ''))
 
-        # Replace template variables with actual data
-        workflow_status = results.get('workflow_status', 'unknown')
+        # Replace template variables
+        rendered_content = rendered_content.replace("{{ url_for('analyze') }}", "/analyze")
 
-        # Create basic results HTML
-        results_html = f"""
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-10">
-                    <div class="text-center mb-4">
-                        <h1>Analysis Complete!</h1>
-                        <p class="lead">Your brand analysis and campaign generation is ready.</p>
-                    </div>
+        # Replace provider loops with actual HTML if text_providers in context
+        if 'text_providers' in context:
+            provider_options = ""
+            for provider in context['text_providers']:
+                selected = 'selected' if provider == 'claude' else ''
+                provider_options += f'<option value="{provider}" {selected}>{provider.title()}</option>'
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card mb-4">
-                                <div class="card-header bg-primary text-white">
-                                    <h5><i class="fas fa-chart-pie me-2"></i>Business Intelligence</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p>Status: <strong>{'Completed' if results.get('phases', {}).get('business_intel', {}).get('status') == 'completed' else 'Processing'}</strong></p>
-                                </div>
-                            </div>
-                        </div>
+            # Replace all provider loops in the template
+            import re
+            rendered_content = re.sub(
+                r'{% for provider in text_providers %}.*?{% endfor %}',
+                provider_options,
+                rendered_content,
+                flags=re.DOTALL
+            )
 
-                        <div class="col-md-6">
-                            <div class="card mb-4">
-                                <div class="card-header bg-success text-white">
-                                    <h5><i class="fas fa-palette me-2"></i>Design Analysis</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p>Status: <strong>{'Completed' if results.get('phases', {}).get('design_analysis', {}).get('status') == 'completed' else 'Processing'}</strong></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card mb-4">
-                                <div class="card-header bg-info text-white">
-                                    <h5><i class="fas fa-bullhorn me-2"></i>Social Media Strategy</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p>Status: <strong>{'Completed' if results.get('phases', {}).get('social_content', {}).get('status') == 'completed' else 'Processing'}</strong></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="card mb-4">
-                                <div class="card-header bg-warning text-white">
-                                    <h5><i class="fas fa-images me-2"></i>Generated Images</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p>Status: <strong>{'Completed' if results.get('phases', {}).get('brand_images', {}).get('status') == 'completed' else 'Processing'}</strong></p>
-                                    <p>Images Generated: <strong>{len(images)}</strong></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {"".join([f'''
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h6>{img['concept']} (Post {img['post_number']})</h6>
-                            <p><strong>File:</strong> {img['filename']}</p>
-                            <a href="/download/{img['filepath']}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-download me-1"></i>Download
-                            </a>
-                        </div>
-                    </div>
-                    ''' for img in images]) if images else ''}
-
-                    <div class="text-center mt-4">
-                        <a href="/" class="btn btn-outline-primary">
-                            <i class="fas fa-arrow-left me-2"></i>Analyze Another Website
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        """
-
-        rendered_content = rendered_content.replace('{% block content %}{% endblock %}', results_html)
+        # Handle session_id and other context variables
+        if 'session_id' in context:
+            rendered_content = rendered_content.replace('{{ session_id }}', context['session_id'])
 
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'text/html'},
             'body': rendered_content
         }
-
     except Exception as e:
-        print(f"Error serving results: {e}")
+        print(f"Error in render_template_serverless: {e}")
         import traceback
         traceback.print_exc()
-        return serve_error_page(f"Error displaying results: {str(e)}")
+        return serve_error_page(f"Template rendering error: {str(e)}")
 
+# Error handling function
 def serve_error_page(error_message):
     """Serve error page."""
     error_html = f"""
@@ -423,16 +478,4 @@ def serve_error_page(error_message):
         'statusCode': 500,
         'headers': {'Content-Type': 'text/html'},
         'body': error_html
-    }
-
-def serve_results_page(session_id):
-    """Serve results page (placeholder)."""
-    return serve_error_page(f'Session {session_id} not found')
-
-def serve_status_api(session_id):
-    """Serve status API (placeholder)."""
-    return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
-        'body': json.dumps({'status': 'unknown', 'message': 'Status API not implemented in serverless version'})
     }
