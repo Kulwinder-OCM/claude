@@ -133,7 +133,7 @@ def status(session_id):
     })
 
 @app.route('/download/<path:filepath>')
-def download_image(filepath):
+def download_image(filepath): 
     """Download generated images."""
     try:
         # Security: ensure the file is in the metrics directory
