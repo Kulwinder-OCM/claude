@@ -122,38 +122,79 @@ def analyze():
     # Generate a unique session ID for this analysis
     session_id = f"{url.replace('https://', '').replace('http://', '').replace('/', '-').replace('.', '-')}-{int(time.time())}"
 
+    # ALWAYS create the session first to avoid 404 errors
+    workflow_results[session_id] = {
+        'workflow_status': 'starting',
+        'url': url,
+        'timestamp': time.time(),
+        'message': 'Initializing analysis...'
+    }
+
     # Start workflow in background thread
     def run_workflow():
+        # Update status to in_progress
+        workflow_results[session_id] = {
+            'workflow_status': 'in_progress',
+            'url': url,
+            'timestamp': time.time(),
+            'message': 'Running AI analysis...'
+        }
+
         try:
             print(f"=== Starting workflow for {url} ===")
 
-            # Test basic imports first
+            # Test if we can even import basic modules
             try:
+                print("Testing basic imports...")
+                import os
+                import sys
+                from pathlib import Path
+                print("✓ Basic imports successful")
+
+                # Check environment
+                print(f"✓ Environment check:")
+                print(f"  Current dir: {Path(__file__).parent}")
+                print(f"  Parent dir: {Path(__file__).parent.parent}")
+                print(f"  Python path entries: {len(sys.path)}")
+                print(f"  CLAUDE_API_KEY: {'Set' if os.getenv('CLAUDE_API_KEY') else 'Missing'}")
+
+                # Check if src directory exists
+                src_path = Path(__file__).parent.parent / "src"
+                print(f"  SRC directory exists: {src_path.exists()}")
+                if src_path.exists():
+                    print(f"  SRC contents: {[f.name for f in src_path.iterdir() if f.is_file()][:5]}")
+
+            except Exception as e:
+                raise Exception(f"Basic imports failed: {str(e)}")
+
+            # Try to import the orchestrator
+            try:
+                print("Importing BrandWorkflowOrchestrator...")
                 from orchestrator import BrandWorkflowOrchestrator
                 print("✓ Successfully imported BrandWorkflowOrchestrator")
             except Exception as e:
-                print(f"✗ Failed to import BrandWorkflowOrchestrator: {e}")
-                raise e
+                raise Exception(f"Failed to import BrandWorkflowOrchestrator: {str(e)}")
 
-            # Test environment variables
-            import os
-            print(f"✓ Environment variables:")
-            print(f"  CLAUDE_API_KEY: {'Set' if os.getenv('CLAUDE_API_KEY') else 'Missing'}")
-            print(f"  GEMINI_API_KEY: {'Set' if os.getenv('GEMINI_API_KEY') else 'Missing'}")
-            print(f"  SCREENSHOT_API_KEY: {'Set' if os.getenv('SCREENSHOT_API_KEY') else 'Missing'}")
+            # Try to initialize orchestrator
+            try:
+                print("Initializing orchestrator...")
+                orchestrator = BrandWorkflowOrchestrator()
+                print("✓ BrandWorkflowOrchestrator initialized")
+            except Exception as e:
+                raise Exception(f"Failed to initialize orchestrator: {str(e)}")
 
-            # Initialize orchestrator
-            print("Initializing BrandWorkflowOrchestrator...")
-            orchestrator = BrandWorkflowOrchestrator()
-            print("✓ BrandWorkflowOrchestrator initialized")
+            # Try to run workflow
+            try:
+                print("Running complete workflow...")
+                results = orchestrator.run_complete_workflow(url)
+                print(f"✓ Workflow completed. Status: {results.get('workflow_status', 'unknown')}")
 
-            # Run workflow
-            print("Running complete workflow...")
-            results = orchestrator.run_complete_workflow(url)
-            print(f"✓ Workflow completed. Status: {results.get('workflow_status', 'unknown')}")
-            print(f"✓ Phases: {list(results.get('phases', {}).keys())}")
+                # Ensure URL is in results
+                results['url'] = url
+                workflow_results[session_id] = results
 
-            workflow_results[session_id] = results
+            except Exception as e:
+                raise Exception(f"Workflow execution failed: {str(e)}")
 
         except Exception as e:
             print(f"✗ Workflow error: {e}")
@@ -166,16 +207,20 @@ def analyze():
                 'workflow_status': 'failed',
                 'url': url,
                 'traceback': error_details,
+                'timestamp': time.time(),
                 'debug_info': {
-                    'python_path': sys.path,
+                    'python_path': sys.path[:3],  # First 3 entries
                     'current_dir': str(Path(__file__).parent),
                     'src_exists': (Path(__file__).parent.parent / "src").exists(),
-                    'orchestrator_exists': (Path(__file__).parent.parent / "src" / "orchestrator.py").exists()
+                    'orchestrator_exists': (Path(__file__).parent.parent / "src" / "orchestrator.py").exists(),
+                    'env_vars': {
+                        'CLAUDE_API_KEY': 'set' if os.getenv('CLAUDE_API_KEY') else 'missing',
+                        'GEMINI_API_KEY': 'set' if os.getenv('GEMINI_API_KEY') else 'missing'
+                    }
                 }
             }
 
-    # Start the workflow
-    workflow_results[session_id] = {'workflow_status': 'in_progress', 'url': url}
+    # Start the workflow thread
     thread = threading.Thread(target=run_workflow)
     thread.daemon = True
     thread.start()
@@ -409,6 +454,17 @@ def providers():
             'traceback': traceback.format_exc(),
             'debug': 'Failed to load AI providers'
         })
+
+@app.route('/debug')
+def debug():
+    """Debug endpoint to show all sessions and system info."""
+    return jsonify({
+        'active_sessions': list(workflow_results.keys()),
+        'session_count': len(workflow_results),
+        'session_details': {k: {'status': v.get('workflow_status', 'unknown'), 'url': v.get('url', 'unknown')} for k, v in workflow_results.items()},
+        'python_path_count': len(sys.path),
+        'current_time': time.time()
+    })
 
 @app.route('/test')
 def test():
