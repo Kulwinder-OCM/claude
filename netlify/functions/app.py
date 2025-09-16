@@ -37,8 +37,8 @@ def handler(event, context):
         path = event.get('path', '/')
 
         # Remove the function path prefix if present
-        if path.startswith('/netlify/functions/app'):
-            path = path.replace('/netlify/functions/app', '') or '/'
+        if path.startswith('/.netlify/functions/app'):
+            path = path.replace('/.netlify/functions/app', '') or '/'
 
         print(f"Processing {method} {path}")
 

@@ -1,5 +1,5 @@
 [build]
-  command = "echo 'Function build complete'"
+  command = "echo 'Building Netlify function'"
 
 [build.environment]
   # Disable secrets scanning for expected configuration files and documentation
@@ -10,6 +10,6 @@
 
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/app"
+  to = "/.netlify/functions/app/:splat"
   status = 200
   force = true
