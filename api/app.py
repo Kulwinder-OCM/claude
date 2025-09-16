@@ -200,7 +200,7 @@ def index():
             <title>AI Brand Analysis</title>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
         </head>
         <body>
             <div class="container mt-5">
@@ -236,7 +236,7 @@ def index():
                 </div>
             </div>
 
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         </body>
         </html>
         '''
@@ -419,7 +419,7 @@ def results(session_id):
             <html>
             <head>
                 <title>Analysis in Progress</title>
-                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+                <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
                 <meta http-equiv="refresh" content="5">
             </head>
             <body>
@@ -543,7 +543,7 @@ def results(session_id):
         <html>
         <head>
             <title>Analysis Complete</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
             <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
         </head>
         <body>
@@ -565,7 +565,7 @@ def results(session_id):
                 {f'<div class="alert alert-danger mt-3"><h5>Error:</h5><p>{results.get("error")}</p></div>' if results.get('error') else ''}
                 {f'<div class="alert alert-info mt-3">{results.get("message")}</div>' if results.get('message') else ''}
             </div>
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         </body>
         </html>
         '''
@@ -744,17 +744,78 @@ def test():
 def status_test(session_id):
     """Simple status test to see what's in the session."""
     if session_id not in workflow_results:
-        return f"Session {session_id} not found. Available: {list(workflow_results.keys())}"
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head><title>Session Status</title></head>
+        <body style="font-family: monospace; margin: 40px;">
+            <h1>Session Not Found</h1>
+            <p><strong>Looking for:</strong> {session_id}</p>
+            <p><strong>Available sessions:</strong></p>
+            <ul>
+        """ + '\n'.join(f'<li>{s}</li>' for s in workflow_results.keys()) + """
+            </ul>
+            <a href="/debug">View All Sessions</a>
+        </body>
+        </html>
+        """
 
     results = workflow_results[session_id]
+
+    # Create a detailed HTML status page
+    phases_info = ""
+    if results.get('phases'):
+        phases_info = "<h3>Phases:</h3><ul>"
+        for phase_name, phase_data in results['phases'].items():
+            status = phase_data.get('status', 'unknown')
+            message = phase_data.get('message', 'No message')
+            phases_info += f'<li><strong>{phase_name}:</strong> {status} - {message}</li>'
+        phases_info += "</ul>"
+
     return f"""
-    Session: {session_id}
-    Status: {results.get('workflow_status', 'unknown')}
-    Progress: {results.get('progress', 0)}%
-    Message: {results.get('message', 'No message')}
-    URL: {results.get('url', 'No URL')}
-    Has Phases: {'Yes' if results.get('phases') else 'No'}
-    Keys: {list(results.keys())}
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Workflow Status</title>
+        <meta http-equiv="refresh" content="5">
+        <style>
+            body {{ font-family: monospace; margin: 40px; background: #f5f5f5; }}
+            .status {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+            .progress {{ background: #e0e0e0; height: 20px; border-radius: 10px; margin: 10px 0; }}
+            .progress-bar {{ background: #007bff; height: 20px; border-radius: 10px; transition: width 0.3s; }}
+        </style>
+    </head>
+    <body>
+        <h1>Workflow Status Monitor</h1>
+
+        <div class="status">
+            <h2>Session: {session_id}</h2>
+            <p><strong>Status:</strong> {results.get('workflow_status', 'unknown')}</p>
+            <p><strong>Progress:</strong> {results.get('progress', 0)}%</p>
+            <div class="progress">
+                <div class="progress-bar" style="width: {results.get('progress', 0)}%"></div>
+            </div>
+            <p><strong>Message:</strong> {results.get('message', 'No message')}</p>
+            <p><strong>URL:</strong> {results.get('url', 'No URL')}</p>
+            <p><strong>Timestamp:</strong> {results.get('timestamp', 'No timestamp')}</p>
+            <p><strong>Has Phases:</strong> {'Yes' if results.get('phases') else 'No'}</p>
+            <p><strong>All Keys:</strong> {', '.join(results.keys())}</p>
+        </div>
+
+        {phases_info}
+
+        {'<div class="status"><h3>Error:</h3><pre>' + str(results.get('error', '')) + '</pre></div>' if results.get('error') else ''}
+
+        <div class="status">
+            <h3>Actions:</h3>
+            <a href="/status/{session_id}">JSON API</a> |
+            <a href="/debug">All Sessions</a> |
+            <a href="/">Start New Analysis</a>
+        </div>
+
+        <p><em>Page auto-refreshes every 5 seconds</em></p>
+    </body>
+    </html>
     """
 
 @app.route('/simple-test')
