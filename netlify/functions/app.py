@@ -30,7 +30,7 @@ workflow_results = {}
 def handler(event, context):
     """Netlify function handler for the brand analysis application."""
     try:
-        print(f"Event: {json.dumps(event, default=str)}")
+        print(f"Function called with event: {json.dumps(event, default=str)}")
 
         # Handle different types of requests
         method = event.get('httpMethod', 'GET').upper()
@@ -42,9 +42,32 @@ def handler(event, context):
 
         print(f"Processing {method} {path}")
 
+        # Simple test response first
+        if path == '/' and method == 'GET':
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'text/html'},
+                'body': '''
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>AI Brand Analysis - Working!</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                </head>
+                <body>
+                    <div class="container mt-5">
+                        <h1>Flask App is Running!</h1>
+                        <p>The main function is working. Now let's test the full Flask functionality...</p>
+                        <a href="/full" class="btn btn-primary">Load Full Flask App</a>
+                    </div>
+                </body>
+                </html>
+                '''
+            }
+
         # Route handling - exact match to Flask app routes
         if method == 'GET':
-            if path == '/' or path == '/index.html':
+            if path == '/full':
                 return flask_index()
             elif path.startswith('/static/'):
                 return serve_static_file(path)
