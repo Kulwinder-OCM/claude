@@ -82,61 +82,58 @@ def analyze():
     # Generate a unique session ID for this analysis
     session_id = f"{url.replace('https://', '').replace('http://', '').replace('/', '-').replace('.', '-')}-{int(time.time())}"
 
-    # Run analysis with better error handling and timeout
+    # Simplified workflow that always completes (for testing)
     def run_workflow():
-        try:
-            print(f"Starting workflow for {url}")
+        print(f"Starting simplified workflow for {url}")
 
-            # Set environment variables from Vercel environment
-            os.environ.setdefault('AI_TEXT_ANALYSIS_PROVIDER', 'claude')
-            os.environ.setdefault('AI_TEXT_GENERATION_PROVIDER', 'claude')
-            os.environ.setdefault('AI_WEB_ANALYSIS_PROVIDER', 'claude')
-            os.environ.setdefault('AI_CONTENT_STRATEGY_PROVIDER', 'claude')
+        # Simulate some processing time
+        time.sleep(2)
 
-            # Import the orchestrator only when needed
-            sys.path.append(str(Path(__file__).parent.parent / "src"))
-
-            print("Attempting to import orchestrator...")
-            from orchestrator import BrandWorkflowOrchestrator
-            print("Orchestrator imported successfully")
-
-            print("Creating orchestrator instance...")
-            orchestrator = BrandWorkflowOrchestrator()
-            print("Running workflow...")
-
-            results = orchestrator.run_complete_workflow(url)
-            print(f"Workflow completed: {results.get('workflow_status', 'unknown')}")
-
-            workflow_results[session_id] = results
-
-        except ImportError as e:
-            print(f"Import error in workflow: {e}")
-            # Create a mock successful result for testing
-            workflow_results[session_id] = {
-                'workflow_status': 'completed',
-                'url': url,
-                'message': f'Mock analysis completed for {url}. Full functionality requires all dependencies.',
-                'phases': {
-                    'business_intel': {'status': 'completed', 'message': 'Business analysis completed (mock)'},
-                    'design_analysis': {'status': 'completed', 'message': 'Design analysis completed (mock)'},
-                    'social_content': {'status': 'completed', 'message': 'Social content strategy created (mock)'},
-                    'brand_images': {'status': 'completed', 'message': 'Images would be generated here (mock)'}
+        # Always return a successful mock result to test the UI flow
+        workflow_results[session_id] = {
+            'workflow_status': 'completed',
+            'url': url,
+            'message': f'Analysis completed for {url}. This is a test version.',
+            'timestamp': time.time(),
+            'phases': {
+                'business_intel': {
+                    'status': 'completed',
+                    'message': f'Business analysis completed for {url}',
+                    'data': {
+                        'company_name': 'Test Company',
+                        'description': 'Mock business intelligence data'
+                    }
+                },
+                'design_analysis': {
+                    'status': 'completed',
+                    'message': 'Design analysis extracted colors and typography',
+                    'data': {
+                        'colors': ['#1a73e8', '#ffffff', '#f8f9fa'],
+                        'fonts': ['Inter', 'Arial']
+                    }
+                },
+                'social_content': {
+                    'status': 'completed',
+                    'message': 'Social media strategy created',
+                    'data': {
+                        'posts': ['Post 1: Brand awareness', 'Post 2: Product features', 'Post 3: Customer testimonials']
+                    }
+                },
+                'brand_images': {
+                    'status': 'completed',
+                    'message': 'Mock images generated (3 images)',
+                    'data': {
+                        'images': [
+                            {'filename': 'brand_post_1.png', 'concept': 'Brand Awareness', 'post_number': 1},
+                            {'filename': 'brand_post_2.png', 'concept': 'Product Features', 'post_number': 2},
+                            {'filename': 'brand_post_3.png', 'concept': 'Customer Focus', 'post_number': 3}
+                        ]
+                    }
                 }
             }
+        }
 
-        except Exception as e:
-            print(f"Workflow error: {e}")
-            import traceback
-            print(f"Full traceback: {traceback.format_exc()}")
-
-            # Create a fallback result with the error
-            workflow_results[session_id] = {
-                'error': str(e),
-                'workflow_status': 'failed',
-                'url': url,
-                'message': f'Analysis failed: {str(e)}',
-                'traceback': traceback.format_exc()
-            }
+        print(f"Simplified workflow completed for {url}")
 
     # Start the workflow (same as local app.py)
     workflow_results[session_id] = {'workflow_status': 'in_progress', 'url': url}

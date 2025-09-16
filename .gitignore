@@ -60,3 +60,4 @@ metrics/
 # Documentation files that may contain example API keys
 AI_PROVIDERS.md
 WEB_INTERFACE.md
+.vercel

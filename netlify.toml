@@ -1,7 +1,0 @@
-[build]
-  command = "echo 'Static site build'"
-  publish = "static"
-
-[build.environment]
-  # Disable secrets scanning for expected configuration files and documentation
-  SECRETS_SCAN_OMIT_PATHS = "metrics/**,*.md,templates/**,netlify.toml,.env"
