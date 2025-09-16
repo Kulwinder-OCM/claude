@@ -1,0 +1,107 @@
+{
+  "analysis_metadata": {
+    "url": "https://www.bastholm.com/",
+    "screenshot_api_request": "https://api.screenshotone.com/take?url=https://www.bastholm.com/&access_key=2tKEyoM1iZcU7A&format=png&viewport_width=375&viewport_height=812&device_scale_factor=2&full_page=true&block_cookie_banners=true&block_ads=true",
+    "viewport": "375x812 (mobile)",
+    "analysis_date": "2025-09-12",
+    "analyst_notes": "Mobile viewport captures critical magenta brand section below desktop fold"
+  },
+  "style_snapshot": {
+    "vibe_keywords": ["bold", "confident", "high-contrast", "tech-forward", "vibrant"],
+    "art_direction": "Dramatic black-and-white photography with electric magenta brand punctuation"
+  },
+  "color_kit": {
+    "background_primary": {"hex": "#FFFFFF", "where_seen": "main content areas, client logos section"},
+    "background_secondary": {"hex": "#000000", "where_seen": "footer, navigation overlay"},
+    "brand_primary_magenta": {"hex": "#FF00FF", "where_seen": "hero CTA section, accent elements, key messaging area"},
+    "text_primary": {"hex": "#000000", "where_seen": "main headings, body text on white"},
+    "text_secondary": {"hex": "#FFFFFF", "where_seen": "text on dark/magenta backgrounds"},
+    "text_tertiary": {"hex": "#666666", "where_seen": "subtext, captions"},
+    "cta_button": {"hex": "#000000", "where_seen": "See How button with white text"},
+    "hero_overlay": {"hex": "#000000", "where_seen": "semi-transparent overlay on hero image", "opacity": "0.6"},
+    "recommended_pairings": [
+      "Black text on White background",
+      "White text on Magenta background", 
+      "White text on Black background"
+    ]
+  },
+  "typography_kit": {
+    "classification": "sans-serif, modern grotesque",
+    "likely_families": [
+      {"name": "Helvetica Neue", "confidence": 0.8}, 
+      {"name": "Arial", "confidence": 0.6},
+      {"name": "Inter", "confidence": 0.7}
+    ],
+    "weights_used": {
+      "logo": 400,
+      "h1": 700,
+      "h2": 600, 
+      "body": 400,
+      "buttons": 500,
+      "captions": 300
+    },
+    "hierarchy": {
+      "logo": {"size": "28-32px", "leading": "normal", "letterspacing": "wide"},
+      "h1": {"size": "36-42px", "leading": "tight", "letterspacing": "normal"},
+      "h2": {"size": "24-28px", "leading": "normal", "letterspacing": "normal"},
+      "body": {"size": "16-18px", "leading": "relaxed", "letterspacing": "normal"},
+      "caption": {"size": "12-14px", "leading": "normal", "letterspacing": "normal"}
+    },
+    "casing": "Title Case for headings, sentence case for body",
+    "text_treatments": {
+      "letterspacing": "normal to wide for logo",
+      "emphasis": "bold weights for impact",
+      "special_effects": "high contrast white text on magenta"
+    }
+  },
+  "composition": {
+    "alignment": "center-aligned hero with left-aligned content blocks",
+    "safe_areas": {
+      "instagram_square": "40px outer padding for text readability",
+      "facebook_cover": "60px outer padding with centered focal point"
+    },
+    "layout_patterns": [
+      "Full-width hero with overlay",
+      "Centered logo and navigation", 
+      "Prominent magenta CTA section",
+      "Clean client logo grid",
+      "Minimal footer with dark background"
+    ],
+    "shape_cues": ["rounded CTA buttons", "clean geometric logo", "structured grid layout"]
+  },
+  "background_recipe": {
+    "type": "layered",
+    "hero_background": {
+      "base": "black and white photography",
+      "overlay": {"hex": "#000000", "opacity": 0.6},
+      "texture": "high-contrast photographic grain"
+    },
+    "magenta_section": {
+      "type": "solid",
+      "color": "#FF00FF",
+      "texture": "flat, vibrant"
+    },
+    "content_areas": {
+      "type": "solid",
+      "color": "#FFFFFF",
+      "texture": "clean, minimal"
+    }
+  },
+  "social_recipe_1080": [
+    "Set background to white #FFFFFF",
+    "Create magenta accent block #FF00FF in upper third",
+    "Add 40px padding on all sides for mobile-safe area",
+    "Place headline in bold sans-serif 48px with tight leading",
+    "Use black text #000000 on white, white text on magenta",
+    "Add rounded black CTA button with white text",
+    "Maintain high contrast throughout design"
+  ],
+  "design_patterns": {
+    "hero_treatment": "Dark overlay on dramatic B&W photography",
+    "brand_moment": "Electric magenta section creates visual break",
+    "content_hierarchy": "Bold headings with clean body text",
+    "client_showcase": "Minimal logo grid on white background",
+    "navigation": "Clean hamburger menu with overlay"
+  },
+  "visual_feel_description": "The design feels like stepping into a high-end tech consultancy's sleek office space. The black and white photography creates a serious, professional foundation like polished concrete floors, while the electric magenta punch feels like neon accent lighting that demands attention. The overall experience is confident and forward-thinking - imagine a Tesla showroom meets creative agency. The typography feels crisp and authoritative, like expensive business cards with perfect letterpress. The layout breathes with intentional white space, creating a sense of premium positioning and clarity of purpose."
+}

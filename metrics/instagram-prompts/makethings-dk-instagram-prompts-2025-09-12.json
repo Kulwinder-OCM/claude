@@ -1,0 +1,35 @@
+{
+  "generation_metadata": {
+    "domain_name": "makethings-dk",
+    "creation_date": "2025-09-12",
+    "source_files": {
+      "design_analysis": "makethings-dk-design-analysis-2025-09-12.json",
+      "business_intelligence": "makethings-dk-business-intelligence-2025-09-12.json"
+    }
+  },
+  "brand_summary": {
+    "primary_color": "#5CBDB4",
+    "text_color": "#212121",
+    "secondary_text_color": "#424242",
+    "background_color": "#FFFFFF",
+    "font_family": "Inter",
+    "style_keywords": "Scandinavian minimalism clean geometric professional Nordic"
+  },
+  "instagram_prompts": [
+    {
+      "post_number": 1,
+      "theme": "Strategic Digital Transformation",
+      "gemini_prompt": "Create a 1080×1080px Instagram post using this exact specification:\n\nBACKGROUND: Clean white background with subtle geometric elements in Nordic turquoise accents\nTYPOGRAPHY: Inter font throughout\nMAIN HEADLINE: \"Transform Your Digital Strategy\" in bold dark charcoal at 56px, positioned in upper third\nSUPPORTING TEXT: \"23+ years helping Fortune 500 companies strengthen their online presence and create meaningful business impact\" in medium gray at 20px, centered below headline\nBRAND ELEMENT: Minimalist geometric shape in professional teal as subtle accent\nSTYLE: Scandinavian minimalism aesthetic with abundant white space, clean lines, and professional Nordic feel\nSPACING: 80px padding on all sides for mobile readability\nEFFECTS: Subtle shadow on key elements\n\nDesign emphasizes strategic expertise and professional credibility with clean, geometric Scandinavian design principles."
+    },
+    {
+      "post_number": 2,
+      "theme": "Brand Platform & Narrative Development",
+      "gemini_prompt": "Create a 1080×1080px Instagram post using this exact specification:\n\nBACKGROUND: Soft off-white background with minimal geometric pattern in Nordic turquoise\nTYPOGRAPHY: Inter font throughout\nMAIN HEADLINE: \"Create Meaningful Work\" in bold dark charcoal at 52px, positioned centrally\nSUPPORTING TEXT: \"Brand Platform Development • Digital Strategy • Technology Advisory\" in professional teal at 18px, spaced below headline\nSECONDARY TEXT: \"Independent advisory across brand, communication, strategy, and technology\" in medium gray at 16px\nSTYLE: Clean Scandinavian minimalist aesthetic with geometric shapes and abundant white space\nSPACING: 90px padding on all sides for optimal mobile viewing\nEFFECTS: Subtle outlined icons in Nordic turquoise color, minimal drop shadows\n\nDesign reflects Danish design philosophy with focus on functionality, simplicity, and purposeful communication."
+    },
+    {
+      "post_number": 3,
+      "theme": "Digital Presence & Business Impact",
+      "gemini_prompt": "Create a 1080×1080px Instagram post using this exact specification:\n\nBACKGROUND: Pure white with subtle linear gradient accent from professional teal to darker Nordic turquoise\nTYPOGRAPHY: Inter font throughout\nMAIN HEADLINE: \"Strengthen Your Digital Presence\" in bold dark charcoal at 50px, top positioning\nKEY METRICS: \"C25 • Fortune 500 • Unicorns • SMEs\" in professional teal at 24px bold\nSUPPORTING TEXT: \"Reduce pseudowork, accelerate market entry, create business impact\" in medium gray at 18px\nBRAND MARK: Minimal geometric element in Nordic turquoise as visual anchor\nSTYLE: Scandinavian minimalism with clean lines, geometric shapes, and purposeful use of white space\nSPACING: 85px padding ensuring mobile-first readability\nEFFECTS: Crisp typography hierarchy with subtle geometric accents\n\nDesign communicates premium consulting expertise through refined Nordic aesthetic and strategic messaging hierarchy."
+    }
+  ]
+}

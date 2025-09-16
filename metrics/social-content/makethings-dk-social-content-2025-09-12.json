@@ -1,0 +1,77 @@
+{
+  "content_metadata": {
+    "company_name": "MAKE THINGS",
+    "source_url": "https://makethings.dk/",
+    "creation_date": "2025-09-12",
+    "target_platform": "Instagram",
+    "content_creator": "Claude Social Media Agent"
+  },
+  "brand_analysis": {
+    "brand_voice": "Professional yet approachable, thoughtful, experienced, Danish minimalism, expertise-driven",
+    "target_audience": "Danish business leaders, entrepreneurs, and marketing professionals aged 30-50 seeking digital transformation and brand development",
+    "key_messaging": ["Digital transformation", "Brand authenticity", "Strategic expertise", "Danish design principles", "Independent consulting value"],
+    "emotional_triggers": ["Trust through expertise", "Confidence in digital future", "Pride in craftsmanship", "Relief from complexity", "Inspiration from success stories"],
+    "cultural_elements": ["Danish design aesthetic", "Scandinavian professionalism", "Work-life balance values", "Quality over quantity mindset"]
+  },
+  "visual_brand_guidelines": {
+    "color_palette": {
+      "primary_teal": "#5CBDB4",
+      "teal_variant": "#4DB6AC",
+      "dark_teal": "#00695C",
+      "background_white": "#FFFFFF",
+      "off_white": "#FAFAFA",
+      "text_primary": "#212121",
+      "text_secondary": "#424242"
+    },
+    "typography": {
+      "primary_font": "Inter, system-ui, sans-serif",
+      "font_characteristics": ["Clean", "Geometric", "Sans-serif", "High legibility"],
+      "text_hierarchy": {
+        "headlines": "Bold, 32-48px, #212121",
+        "subheadlines": "Semi-bold, 20-24px, #5CBDB4",
+        "body_text": "Regular, 16px, #424242"
+      }
+    },
+    "design_elements": {
+      "aesthetic": "Scandinavian Minimalism",
+      "key_elements": ["Geometric shapes in teal", "Clean lines", "Abundant white space", "Grid-based layouts"],
+      "visual_style": ["Simple", "Functional", "Clean lines", "Professional"]
+    }
+  },
+  "instagram_posts": [
+    {
+      "post_number": 1,
+      "theme": "Behind-the-scenes",
+      "post_type": "Process/Authenticity",
+      "image_description": "Clean, minimalist workspace shot showing Mads at his desk in Copenhagen with multiple monitors displaying strategy frameworks, design systems, and client presentations. Natural Nordic lighting from a large window, white desk, geometric notebooks, a simple coffee cup, and perhaps a small Danish design object. The aesthetic should reflect Danish minimalism - uncluttered, purposeful, and sophisticated.",
+      "instagram_image_prompt": "Create a professional Instagram post image with Scandinavian minimalist aesthetic. Layout: Clean white background (#FFFFFF) with subtle geometric elements in teal (#5CBDB4). Center focus: Bold text 'DIGITAL CLARITY' in dark gray (#212121), subheading '23 Years of Strategic Excellence' in teal (#5CBDB4). Include 'MAKE THINGS' wordmark in bottom corner. Use Inter font family, abundant white space, clean lines, and geometric teal accent borders. Professional, authoritative tone with Danish design sensibility. Square 1080x1080 format.",
+      "text_overlay": "Strategy starts with clarity",
+      "caption": "Behind every successful digital transformation is hours of strategic thinking and meticulous planning. ⚡️\n\nThis morning I'm diving deep into a brand platform project - mapping out customer journeys, defining value propositions, and crafting the narrative that will guide everything from website design to social media strategy.\n\nIt's not glamorous work, but it's the foundation that makes everything else possible. When you take time to get the strategy right, the execution becomes so much clearer.\n\nWhat's your approach to strategic planning? Do you start with frameworks or dive straight into creative exploration?\n\n#DigitalStrategy #BrandStrategy #Copenhagen #ConsultingLife #StrategicThinking #DigitalTransformation #DanishDesign #MakeThingsDK",
+      "hashtags": ["#DigitalStrategy", "#BrandStrategy", "#Copenhagen", "#ConsultingLife", "#StrategicThinking", "#DigitalTransformation", "#DanishDesign", "#MakeThingsDK"],
+      "engagement_goal": "Build authenticity and trust by showing the strategic thinking process"
+    },
+    {
+      "post_number": 2,
+      "theme": "Brand Story",
+      "post_type": "Founder Journey/Emotional",
+      "image_description": "Portrait-style image of Mads in a professional yet relaxed setting, perhaps against a clean white wall or in a modern Copenhagen co-working space. He should be looking thoughtfully off-camera or directly at the viewer with a slight smile. The lighting should be warm and natural. Include subtle elements that hint at his journey - maybe a laptop, some design books, or awards in soft focus in the background.",
+      "instagram_image_prompt": "Create a professional Instagram post image with Scandinavian minimalist aesthetic. Layout: White to light teal gradient background (#FFFFFF to #FAFAFA). Center focus: Bold text 'MEANINGFUL IMPACT' in dark gray (#212121), subheading 'Fortune 500 • Unicorns • SMEs • NGOs' in teal (#5CBDB4). Include geometric teal shapes (#5CBDB4) as accent elements. Bottom text: 'Strengthening online business across industries' in medium gray (#424242). Use Inter font family, grid-based layout with abundant white space. Professional, impactful tone. Square 1080x1080 format.",
+      "text_overlay": "From agency walls to independent impact",
+      "caption": "15 years ago, I walked into my first agency role with more enthusiasm than experience. 🌟\n\nFrom AKQA to Valtech, from leading teams of 50 to working solo - each chapter taught me something fundamental about what makes brands truly resonate.\n\nThe biggest lesson? The best strategies aren't born in boardrooms. They emerge from real conversations with real people solving real problems.\n\nThat's why I founded MAKE THINGS. Not to build another agency, but to get back to the core of what I love: sitting across from business owners and helping them see their brand's true potential.\n\nEvery framework I use, every workshop I facilitate, every strategy I develop - it all comes back to that human connection.\n\nWhat made you take the leap into your current path? I'd love to hear your story. 👇\n\n#FounderStory #DigitalStrategy #Copenhagen #EntrepreneurJourney #BrandBuilding #IndependentConsulting #MakeThingsDK #DanishBusiness",
+      "hashtags": ["#FounderStory", "#DigitalStrategy", "#Copenhagen", "#EntrepreneurJourney", "#BrandBuilding", "#IndependentConsulting", "#MakeThingsDK", "#DanishBusiness"],
+      "engagement_goal": "Create emotional connection through personal journey and vulnerability"
+    },
+    {
+      "post_number": 3,
+      "theme": "Customer Spotlight",
+      "post_type": "Social Proof/Testimonial",
+      "image_description": "Split-screen or before/after style image showing a client's brand transformation. Left side: cluttered, unclear brand elements or website screenshots. Right side: clean, organized, professional brand system. Use clean typography to highlight key metrics or quotes. The overall composition should reflect the minimalist Danish aesthetic with plenty of white space and clear visual hierarchy.",
+      "instagram_image_prompt": "Create a professional Instagram post image with Scandinavian minimalist aesthetic. Layout: Pure white background (#FFFFFF) with maximum white space. Center focus: Large text 'DANISH DESIGN THINKING' in dark gray (#212121), subheading 'Simple • Functional • Impactful' in teal (#5CBDB4). Include single geometric teal element (#5CBDB4) as minimal accent. Bottom text: 'Scandinavian minimalism meets strategic consulting' in medium gray (#424242). Use Inter font family, minimal composition with clean typography hierarchy. Sophisticated, Nordic cool tone. Square 1080x1080 format.",
+      "text_overlay": "When strategy meets execution",
+      "caption": "\"Mads didn't just give us a new website - he gave us a clear voice and confident direction.\" - Recent client testimonial 🎯\n\nThis brand transformation journey started with a simple question: 'What story do you want your customers to tell about you?'\n\n6 months later:\n→ 300% increase in qualified leads\n→ Brand recognition up 85%\n→ Clear brand guidelines across all touchpoints\n→ Team alignment on messaging and values\n\nBut the real victory? The CEO told me they finally feel proud to share their business cards.\n\nThat's what happens when strategy, design, and authentic storytelling come together. It's not just about looking better - it's about feeling confident in who you are and what you offer.\n\nEvery business has a powerful story. Sometimes it just needs the right strategy to bring it to life.\n\nReady to discover yours? Let's talk. 💬\n\n#ClientSuccess #BrandTransformation #DigitalStrategy #ResultsDelivered #Copenhagen #BrandStrategy #MakeThingsDK #TestimonialTuesday",
+      "hashtags": ["#ClientSuccess", "#BrandTransformation", "#DigitalStrategy", "#ResultsDelivered", "#Copenhagen", "#BrandStrategy", "#MakeThingsDK", "#TestimonialTuesday"],
+      "engagement_goal": "Build social proof and community through client success stories"
+    }
+  ],
+  "strategy_summary": "This content strategy leverages Mads' personal brand and extensive agency experience to build trust and authority in the Danish digital consulting market. Post 1 establishes credibility through behind-the-scenes strategic work, Post 2 creates emotional connection through his founder journey and values, and Post 3 provides social proof through client transformation stories. The tone reflects Danish professionalism - confident but not boastful, expert but approachable, with emphasis on authentic relationships and quality craftsmanship. Cultural elements like Danish minimalism and work philosophy are woven throughout to resonate with the local market while showcasing international agency experience."
+}
