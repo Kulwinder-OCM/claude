@@ -1,31 +1,11 @@
 [build]
-  functions = "netlify/functions"
   publish = "static"
-  command = "pip install -r requirements.txt"
 
 [build.environment]
-  PYTHON_VERSION = "3.9"
   # Disable secrets scanning for expected configuration files and documentation
   SECRETS_SCAN_OMIT_PATHS = "metrics/**,*.md,templates/**,netlify.toml,.env"
-  SECRETS_SCAN_OMIT_KEYS = "AI_TEXT_ANALYSIS_PROVIDER,AI_TEXT_GENERATION_PROVIDER,AI_WEB_ANALYSIS_PROVIDER,AI_CONTENT_STRATEGY_PROVIDER,AI_IMAGE_GENERATION_PROVIDER,SCREENSHOT_ENDPOINT"
-
-[functions]
-  included_files = ["src/**", "templates/**", "static/**", "requirements.txt"]
-
-# Environment variables (set in Netlify dashboard, not here)
-[context.production.environment]
-  AI_TEXT_ANALYSIS_PROVIDER = "claude"
-  AI_TEXT_GENERATION_PROVIDER = "claude"
-  AI_WEB_ANALYSIS_PROVIDER = "claude"
-  AI_CONTENT_STRATEGY_PROVIDER = "claude"
-  AI_IMAGE_GENERATION_PROVIDER = "gemini"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/app/:splat"
-  status = 200
 
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/app"
+  to = "/index.html"
   status = 200

@@ -88,6 +88,10 @@
                         Transform any website into a comprehensive brand analysis with AI-powered insights
                         and professional Instagram-ready images.
                     </p>
+                    <div class="alert alert-info">
+                        <strong>Demo Site:</strong> This is a showcase of the brand analysis tool.
+                        Enter a URL below to get setup instructions for running the full analysis locally.
+                    </div>
                 </div>
 
                 <!-- Main Form Card -->
@@ -224,7 +228,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+        document.getElementById('analysisForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
             const url = document.getElementById('url').value;
@@ -233,56 +237,80 @@
             const resultsDiv = document.getElementById('results');
             const errorDiv = document.getElementById('error');
 
-            // Show loading
+            // Show loading briefly for demo
             loadingSpinner.style.display = 'block';
             loadingBackdrop.style.display = 'block';
             resultsDiv.style.display = 'none';
             errorDiv.style.display = 'none';
 
-            try {
-                const response = await fetch('/.netlify/functions/app', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ url: url })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    // Display results
-                    document.getElementById('resultsContent').innerHTML = `
-                        <div class="alert alert-success">
-                            <h4>Analysis Complete!</h4>
-                            <p>Brand analysis has been generated successfully for <strong>${url}</strong></p>
-                            <p>Check your metrics folder for the generated files and images.</p>
-                        </div>
-                        <div class="card">
-                            <div class="card-body">
-                                <h5>Generated Files:</h5>
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item"><i class="fas fa-file-code me-2"></i>Business Intelligence Analysis</li>
-                                    <li class="list-group-item"><i class="fas fa-palette me-2"></i>Design & Brand Analysis</li>
-                                    <li class="list-group-item"><i class="fas fa-bullhorn me-2"></i>Social Media Strategy</li>
-                                    <li class="list-group-item"><i class="fas fa-images me-2"></i>Instagram Images (3 images)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    `;
-                    resultsDiv.style.display = 'block';
-                } else {
-                    document.getElementById('errorMessage').textContent = result.error || 'An unknown error occurred.';
-                    errorDiv.style.display = 'block';
-                }
-            } catch (error) {
-                document.getElementById('errorMessage').textContent = 'Network error: ' + error.message;
-                errorDiv.style.display = 'block';
-            } finally {
+            // Simulate processing time
+            setTimeout(() => {
                 // Hide loading
                 loadingSpinner.style.display = 'none';
                 loadingBackdrop.style.display = 'none';
-            }
+
+                // Show instructions for local analysis
+                document.getElementById('resultsContent').innerHTML = `
+                    <div class="alert alert-info">
+                        <h4><i class="fas fa-info-circle me-2"></i>Ready for Local Analysis!</h4>
+                        <p>To analyze <strong>${url}</strong>, run the following command locally:</p>
+
+                        <div class="bg-dark text-light p-3 rounded mt-3 mb-3">
+                            <code>python app.py</code>
+                        </div>
+
+                        <p><strong>Then visit:</strong> <code>http://localhost:5001</code></p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-terminal me-2"></i>Local Setup Instructions</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol>
+                                <li><strong>Clone the repository:</strong>
+                                    <div class="bg-light p-2 rounded my-2">
+                                        <code>git clone https://github.com/UncleOnline/Claudelife.git</code>
+                                    </div>
+                                </li>
+                                <li><strong>Install dependencies:</strong>
+                                    <div class="bg-light p-2 rounded my-2">
+                                        <code>pip install -r requirements.txt</code>
+                                    </div>
+                                </li>
+                                <li><strong>Set up your API keys in .env file</strong></li>
+                                <li><strong>Run the Flask application:</strong>
+                                    <div class="bg-light p-2 rounded my-2">
+                                        <code>python app.py</code>
+                                    </div>
+                                </li>
+                                <li><strong>Open your browser to:</strong>
+                                    <div class="bg-light p-2 rounded my-2">
+                                        <code>http://localhost:5001</code>
+                                    </div>
+                                </li>
+                            </ol>
+
+                            <div class="alert alert-warning mt-3">
+                                <strong>Note:</strong> This application requires API keys for Claude, Gemini, and ScreenshotOne services to function properly.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5>What the local app will generate:</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><i class="fas fa-file-code me-2 text-primary"></i>Business Intelligence Analysis (JSON)</li>
+                                <li class="list-group-item"><i class="fas fa-palette me-2 text-success"></i>Design & Brand Analysis (JSON + Screenshot)</li>
+                                <li class="list-group-item"><i class="fas fa-bullhorn me-2 text-info"></i>Social Media Strategy (JSON)</li>
+                                <li class="list-group-item"><i class="fas fa-images me-2 text-warning"></i>Instagram Images (3 × 1080x1080 PNG files)</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                resultsDiv.style.display = 'block';
+            }, 1500);
         });
     </script>
 </body>
