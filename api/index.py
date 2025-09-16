@@ -11,8 +11,8 @@ import threading
 import time
 import os
 
-# Add src to path
-sys.path.append(str(Path(__file__).parent / "src"))
+# Add src to path (adjust for api directory structure)
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 # Import config module which automatically loads environment variables (same as CLI)
 # This ensures identical environment loading to the CLI
@@ -166,9 +166,11 @@ def providers():
     
     return jsonify(result)
 
-# Vercel serverless function handler
-def handler(request):
-    return app
+# Export the Flask app for Vercel
+# Vercel will automatically handle WSGI conversion
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+# For local development
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
