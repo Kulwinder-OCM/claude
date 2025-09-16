@@ -49,19 +49,25 @@ def run_serverless_workflow(url, orchestrator, session_id):
 
         try:
             # Get business analyzer from orchestrator
+            print("  - Calling business_analyzer.process()...")
             business_intel = orchestrator.business_analyzer.process(url)
+            print(f"  - Business analyzer returned: {type(business_intel)} with keys: {list(business_intel.keys()) if isinstance(business_intel, dict) else 'not a dict'}")
+            print(f"  - First 200 chars: {str(business_intel)[:200]}")
+
             results["phases"]["business_intelligence"] = {
                 "status": "completed" if "error" not in business_intel else "failed",
                 "message": "Business analysis completed successfully",
                 "data": business_intel
             }
-            print("✓ Business Intelligence completed")
+            print("✓ Business Intelligence completed and stored")
         except Exception as e:
             print(f"Business Intelligence failed: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
             results["phases"]["business_intelligence"] = {
                 "status": "failed",
                 "message": f"Business analysis failed: {str(e)}",
-                "data": {}
+                "data": {'error': str(e)}
             }
 
         # Phase 2: Design Analysis
@@ -678,6 +684,81 @@ def debug():
         'python_path_count': len(sys.path),
         'current_time': time.time()
     })
+
+@app.route('/debug-data/<session_id>')
+def debug_data(session_id):
+    """Debug endpoint to show the actual raw data in a session."""
+    if session_id not in workflow_results:
+        return f"Session {session_id} not found!"
+
+    results = workflow_results[session_id]
+
+    debug_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Debug Session Data</title>
+        <style>
+            body {{ font-family: monospace; margin: 20px; }}
+            .section {{ margin: 20px 0; padding: 15px; border: 1px solid #ccc; }}
+            pre {{ background: #f5f5f5; padding: 10px; overflow: auto; }}
+            .phase {{ margin: 10px 0; padding: 10px; border-left: 3px solid #007bff; }}
+        </style>
+    </head>
+    <body>
+        <h1>Debug Data for Session: {session_id}</h1>
+
+        <div class="section">
+            <h2>Session Overview</h2>
+            <p><strong>Status:</strong> {results.get('workflow_status', 'unknown')}</p>
+            <p><strong>URL:</strong> {results.get('url', 'unknown')}</p>
+            <p><strong>Progress:</strong> {results.get('progress', 0)}%</p>
+            <p><strong>Message:</strong> {results.get('message', 'no message')}</p>
+        </div>
+
+        <div class="section">
+            <h2>Phases ({len(results.get('phases', {}))} total)</h2>
+    """
+
+    if results.get('phases'):
+        for phase_name, phase_data in results['phases'].items():
+            debug_html += f"""
+            <div class="phase">
+                <h3>{phase_name}</h3>
+                <p><strong>Status:</strong> {phase_data.get('status', 'unknown')}</p>
+                <p><strong>Message:</strong> {phase_data.get('message', 'no message')}</p>
+
+                <h4>Raw Data (first 1000 chars):</h4>
+                <pre>{str(phase_data.get('data', 'no data'))[:1000]}</pre>
+
+                <h4>Data Keys:</h4>
+                <p>{list(phase_data.get('data', {}).keys()) if isinstance(phase_data.get('data'), dict) else 'Not a dict'}</p>
+            </div>
+            """
+    else:
+        debug_html += "<p>No phases data found!</p>"
+
+    debug_html += f"""
+        </div>
+
+        <div class="section">
+            <h2>Raw Results (first 2000 chars)</h2>
+            <pre>{str(results)[:2000]}</pre>
+        </div>
+
+        <div class="section">
+            <h2>All Keys in Results</h2>
+            <p>{list(results.keys())}</p>
+        </div>
+
+        <a href="/status-test/{session_id}">Status Monitor</a> |
+        <a href="/results/{session_id}">Results Page</a> |
+        <a href="/">Home</a>
+    </body>
+    </html>
+    """
+
+    return debug_html
 
 @app.route('/test')
 def test():
