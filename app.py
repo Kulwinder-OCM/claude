@@ -3,13 +3,13 @@
 Flask Web Application for Claude Life Brand Analysis
 """
 
-import os
 import sys
 import json
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_file, flash, redirect, url_for
 import threading
 import time
+import os
 
 # Add src to path
 sys.path.append(str(Path(__file__).parent / "src"))

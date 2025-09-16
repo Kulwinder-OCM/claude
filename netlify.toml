@@ -1,9 +1,21 @@
 [build]
   functions = "netlify/functions"
   publish = "static"
+  command = "pip install -r requirements.txt"
 
 [build.environment]
   PYTHON_VERSION = "3.9"
+
+[functions]
+  included_files = ["src/**", "templates/**", "static/**", "requirements.txt"]
+
+# Environment variables (you'll need to set these in Netlify dashboard)
+[context.production.environment]
+  AI_TEXT_ANALYSIS_PROVIDER = "claude"
+  AI_TEXT_GENERATION_PROVIDER = "claude"
+  AI_WEB_ANALYSIS_PROVIDER = "claude"
+  AI_CONTENT_STRATEGY_PROVIDER = "claude"
+  AI_IMAGE_GENERATION_PROVIDER = "gemini"
 
 [[redirects]]
   from = "/api/*"
@@ -12,5 +24,5 @@
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/.netlify/functions/app"
   status = 200

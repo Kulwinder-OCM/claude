@@ -1,95 +1,63 @@
-import json
 import os
 import sys
-from urllib.parse import parse_qs
+from pathlib import Path
 
-# Add src directory to Python path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-src_path = os.path.join(current_dir, '..', '..', 'src')
-sys.path.insert(0, src_path)
+# Add project root to Python path
+current_dir = Path(__file__).parent
+project_root = current_dir.parent.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "src"))
 
-from config import Config
-from agents.brand_workflow_orchestrator import BrandWorkflowOrchestrator
+# Import the Flask app
+from app import app
 
 def handler(event, context):
-    """Netlify function handler for the brand analysis workflow."""
-
+    """Netlify function handler that wraps the Flask application."""
     try:
-        # Handle preflight OPTIONS requests
-        if event.get('httpMethod') == 'OPTIONS':
-            return {
-                'statusCode': 200,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type',
-                    'Access-Control-Allow-Methods': 'POST, OPTIONS'
-                }
-            }
+        from werkzeug.test import Client
+        from werkzeug.wrappers import BaseResponse
 
-        # Only handle POST requests
-        if event.get('httpMethod') != 'POST':
-            return {
-                'statusCode': 405,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                'body': json.dumps({'error': 'Method not allowed'})
-            }
+        # Create a test client to simulate the request
+        client = Client(app, BaseResponse)
 
-        # Parse request body
-        body = event.get('body', '{}')
-        if event.get('isBase64Encoded'):
-            import base64
-            body = base64.b64decode(body).decode('utf-8')
+        # Convert Netlify event to Flask request format
+        method = event.get('httpMethod', 'GET')
+        path = event.get('path', '/')
+        query_string = event.get('queryStringParameters') or {}
+        headers = event.get('headers', {})
+        body = event.get('body', '')
 
-        try:
-            data = json.loads(body)
-        except json.JSONDecodeError:
-            # Handle form data
-            data = parse_qs(body)
-            data = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in data.items()}
+        # Build query string
+        query_parts = []
+        for key, value in query_string.items():
+            if value is not None:
+                query_parts.append(f"{key}={value}")
+        query_str = '&'.join(query_parts)
 
-        url = data.get('url')
-        if not url:
-            return {
-                'statusCode': 400,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                'body': json.dumps({'error': 'URL is required'})
-            }
+        # Make the request to Flask app
+        if method == 'GET':
+            response = client.get(path, query_string=query_str, headers=headers)
+        elif method == 'POST':
+            response = client.post(path, data=body, headers=headers, query_string=query_str)
+        else:
+            response = client.open(method=method, path=path, data=body, headers=headers, query_string=query_str)
 
-        # Initialize configuration
-        config = Config()
-
-        # Run the brand workflow
-        orchestrator = BrandWorkflowOrchestrator()
-        result = orchestrator.process(url)
-
+        # Convert Flask response to Netlify format
         return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
-            },
-            'body': json.dumps({
-                'success': True,
-                'data': result
-            })
+            'statusCode': response.status_code,
+            'headers': dict(response.headers),
+            'body': response.get_data(as_text=True)
         }
 
     except Exception as e:
         print(f"Error in Netlify function: {e}")
+        import traceback
+        traceback.print_exc()
+
         return {
             'statusCode': 500,
             'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json'
+                'Content-Type': 'text/html'
             },
-            'body': json.dumps({
-                'success': False,
-                'error': str(e)
-            })
+            'body': f"<h1>Internal Server Error</h1><p>{str(e)}</p>"
         }
