@@ -17,7 +17,7 @@ sys.path.append(str(Path(__file__).parent / "src"))
 # Import config module which automatically loads environment variables (same as CLI)
 # This ensures identical environment loading to the CLI
 
-from orchestrator import BrandWorkflowOrchestrator
+from brand_workflow_orchestrator import BrandWorkflowOrchestrator
 from ai_providers.ai_factory import AIProviderFactory
 from config import config
 

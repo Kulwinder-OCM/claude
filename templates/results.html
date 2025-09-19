@@ -85,6 +85,7 @@
     </section>
     {% endif %}
 
+
     <!-- Analysis Results Section -->
     <section class="section-spacing">
         <div class="text-center mb-5">
@@ -278,31 +279,193 @@
                         </p>
                     </div>
                     <div class="card-body">
-                        {% if design_data.get('brand_colors') and design_data.brand_colors is iterable %}
-                        <h5><i class="fas fa-paint-brush me-2 text-warning"></i>Brand Colors</h5>
-                        <div class="d-flex flex-wrap mb-4">
-                            {% for color in design_data.brand_colors[:6] %}
-                            {% if color is mapping %}
-                            <div class="me-3 mb-2 text-center">
-                                <div class="color-swatch" style="width: 50px; height: 50px; background-color: {{ color.get('hex', '#000') }}; border-radius: 8px;"></div>
-                                <small class="d-block mt-1 fw-bold">{{ color.get('hex', '#000') }}</small>
+                        {% if design_data.get('color_kit') and design_data.color_kit is mapping %}
+                        <h5><i class="fas fa-paint-brush me-2 text-warning"></i>Brand Color Palette</h5>
+                        <div class="row mb-4">
+                            <!-- Primary Brand Colors -->
+                            <div class="col-12 mb-3">
+                                <h6 class="fw-bold text-muted mb-3">Primary Brand Colors</h6>
+                                <div class="d-flex flex-wrap">
+                                    {% set color_kit = design_data.color_kit %}
+
+                                    <!-- Background Color -->
+                                    {% if color_kit.get('background') and color_kit.background is mapping %}
+                                    <div class="me-4 mb-3 text-center">
+                                        <div class="color-swatch position-relative" style="width: 70px; height: 70px; background-color: {{ color_kit.background.get('hex', '#FFFFFF') }}; border: 2px solid #ddd; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+                                        <small class="d-block mt-2 fw-bold text-dark">{{ color_kit.background.get('hex', '#FFFFFF') }}</small>
+                                        <small class="d-block text-muted">Background</small>
+                                        <small class="d-block text-muted fst-italic">{{ color_kit.background.get('where_seen', '') }}</small>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Brand Primary Color -->
+                                    {% if color_kit.get('brand_primary') and color_kit.brand_primary is mapping %}
+                                    <div class="me-4 mb-3 text-center">
+                                        <div class="color-swatch position-relative" style="width: 70px; height: 70px; background-color: {{ color_kit.brand_primary.get('hex', '#007AFF') }}; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+                                        <small class="d-block mt-2 fw-bold text-dark">{{ color_kit.brand_primary.get('hex', '#007AFF') }}</small>
+                                        <small class="d-block text-muted">Brand Primary</small>
+                                        <small class="d-block text-muted fst-italic">{{ color_kit.brand_primary.get('where_seen', '') }}</small>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Text Primary Color -->
+                                    {% if color_kit.get('text_primary') and color_kit.text_primary is mapping %}
+                                    <div class="me-4 mb-3 text-center">
+                                        <div class="color-swatch position-relative" style="width: 70px; height: 70px; background-color: {{ color_kit.text_primary.get('hex', '#1D1D1F') }}; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+                                        <small class="d-block mt-2 fw-bold text-dark">{{ color_kit.text_primary.get('hex', '#1D1D1F') }}</small>
+                                        <small class="d-block text-muted">Text Primary</small>
+                                        <small class="d-block text-muted fst-italic">{{ color_kit.text_primary.get('where_seen', '') }}</small>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Text Secondary Color -->
+                                    {% if color_kit.get('text_secondary') and color_kit.text_secondary is mapping %}
+                                    <div class="me-4 mb-3 text-center">
+                                        <div class="color-swatch position-relative" style="width: 70px; height: 70px; background-color: {{ color_kit.text_secondary.get('hex', '#86868B') }}; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+                                        <small class="d-block mt-2 fw-bold text-dark">{{ color_kit.text_secondary.get('hex', '#86868B') }}</small>
+                                        <small class="d-block text-muted">Text Secondary</small>
+                                        <small class="d-block text-muted fst-italic">{{ color_kit.text_secondary.get('where_seen', '') }}</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Accent Colors -->
+                            {% if color_kit.get('accent_colors') and color_kit.accent_colors is iterable and color_kit.accent_colors|length > 0 %}
+                            <div class="col-12 mb-3">
+                                <h6 class="fw-bold text-muted mb-3">Accent Colors</h6>
+                                <div class="d-flex flex-wrap">
+                                    {% for accent in color_kit.accent_colors[:4] %}
+                                    {% if accent is mapping %}
+                                    <div class="me-4 mb-3 text-center">
+                                        <div class="color-swatch position-relative" style="width: 60px; height: 60px; background-color: {{ accent.get('hex', '#E5E5E5') }}; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></div>
+                                        <small class="d-block mt-2 fw-bold text-dark">{{ accent.get('hex', '#E5E5E5') }}</small>
+                                        <small class="d-block text-muted">{{ accent.get('role', 'Accent') }}</small>
+                                        <small class="d-block text-muted fst-italic">{{ accent.get('where_seen', '') }}</small>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
                             </div>
                             {% endif %}
-                            {% endfor %}
+
+                            <!-- Additional Colors -->
+                            {% if color_kit.get('additional_colors') and color_kit.additional_colors is iterable and color_kit.additional_colors|length > 0 %}
+                            <div class="col-12">
+                                <h6 class="fw-bold text-muted mb-3">Additional Colors</h6>
+                                <div class="d-flex flex-wrap">
+                                    {% for additional in color_kit.additional_colors[:4] %}
+                                    {% if additional is mapping %}
+                                    <div class="me-4 mb-3 text-center">
+                                        <div class="color-swatch position-relative" style="width: 50px; height: 50px; background-color: {{ additional.get('hex', '#F0F0F0') }}; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);"></div>
+                                        <small class="d-block mt-2 fw-bold text-dark">{{ additional.get('hex', '#F0F0F0') }}</small>
+                                        <small class="d-block text-muted fst-italic">{{ additional.get('usage', additional.get('where_seen', '')) }}</small>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                         {% endif %}
 
-                        {% if design_data.get('typography') and design_data.typography is mapping %}
-                        <h5><i class="fas fa-font me-2 text-warning"></i>Typography</h5>
-                        <p><strong>Font Style:</strong> {{ design_data.typography.get('primary_font', 'Modern sans-serif typography') }}</p>
+                        {% if design_data.get('typography_kit') and design_data.typography_kit is mapping %}
+                        <h5><i class="fas fa-font me-2 text-warning"></i>Typography & Fonts</h5>
+                        <div class="mb-4">
+                            {% set typography = design_data.typography_kit %}
+
+                            <!-- Font Classification -->
+                            {% if typography.get('classification') %}
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold text-muted">Font Style</h6>
+                                    <p class="mb-2"><span class="badge bg-light text-dark">{{ typography.classification }}</span></p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Font Families -->
+                            {% if typography.get('likely_families') and typography.likely_families is iterable %}
+                            <div class="mb-3">
+                                <h6 class="fw-bold text-muted">Detected Font Families</h6>
+                                <div class="d-flex flex-wrap">
+                                    {% for font in typography.likely_families[:4] %}
+                                    {% if font is mapping %}
+                                    <div class="me-4 mb-2">
+                                        <div class="card border-0 bg-light">
+                                            <div class="card-body p-3">
+                                                <h6 class="card-title mb-1" style="font-family: {{ font.get('name', 'Arial') }}, Arial, sans-serif;">
+                                                    {{ font.get('name', 'Unknown Font') }}
+                                                </h6>
+                                                <small class="text-muted">
+                                                    Confidence: {{ (font.get('confidence', 0.5) * 100)|round|int }}%
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Font Weights and Sizes -->
+                            <div class="row">
+                                {% if typography.get('weights_used') and typography.weights_used is mapping %}
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="fw-bold text-muted">Font Weights</h6>
+                                    {% for element, weight in typography.weights_used.items() %}
+                                    <p class="mb-1">
+                                        <span class="text-uppercase small text-muted me-2">{{ element }}:</span>
+                                        <span class="fw-bold" style="font-weight: {{ weight }};">{{ weight }}</span>
+                                    </p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+
+                                {% if typography.get('sizes_observed') and typography.sizes_observed is mapping %}
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="fw-bold text-muted">Font Sizes</h6>
+                                    {% for element, size in typography.sizes_observed.items() %}
+                                    <p class="mb-1">
+                                        <span class="text-uppercase small text-muted me-2">{{ element }}:</span>
+                                        <span class="fw-bold">{{ size }}</span>
+                                    </p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
                         {% endif %}
 
-                        {% if design_data.get('layout_style') and design_data.layout_style is mapping %}
-                        <h5><i class="fas fa-th-large me-2 text-warning"></i>Layout Style</h5>
-                        <p class="text-muted">{{ design_data.layout_style.get('description', 'Clean, professional layout with modern design elements and structured information hierarchy') }}</p>
+                        {% if design_data.get('composition') and design_data.composition is mapping %}
+                        <h5><i class="fas fa-th-large me-2 text-warning"></i>Layout & Composition</h5>
+                        <div class="mb-4">
+                            {% set composition = design_data.composition %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {% if composition.get('alignment') %}
+                                    <p><strong>Alignment:</strong> <span class="text-capitalize">{{ composition.alignment }}</span></p>
+                                    {% endif %}
+                                    {% if composition.get('spacing_patterns') %}
+                                    <p><strong>Spacing:</strong> {{ composition.spacing_patterns }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    {% if composition.get('shape_cues') and composition.shape_cues is iterable %}
+                                    <p><strong>Design Elements:</strong></p>
+                                    <ul class="list-unstyled">
+                                        {% for cue in composition.shape_cues[:4] %}
+                                        <li><i class="fas fa-check-circle text-success me-2"></i>{{ cue|title }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                         {% endif %}
 
-                        {% if not design_data.get('brand_colors') and not design_data.get('typography') %}
+                        {% if not design_data.get('color_kit') and not design_data.get('typography_kit') %}
                         <div class="alert alert-light">
                             <h6><i class="fas fa-check-circle me-2"></i>Analysis Complete</h6>
                             <p class="mb-0 small">Website design analyzed for visual elements, color schemes, typography, and layout patterns.</p>
@@ -359,6 +522,218 @@
 </div>
 {% endblock %}
 
+{% block styles %}
+<style>
+/* Brand Identity Section Styles */
+.brand-color-card {
+    min-width: 120px;
+    text-align: center;
+}
+
+.color-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    margin: 0 auto 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 3px solid #fff;
+    position: relative;
+}
+
+.color-preview.accent {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+}
+
+.color-info {
+    padding: 0 8px;
+}
+
+.color-hex {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: #1f2937;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.color-hex:hover {
+    color: #3b82f6;
+    transform: scale(1.05);
+}
+
+.color-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.color-usage {
+    font-size: 11px;
+    color: #9ca3af;
+    font-style: italic;
+    line-height: 1.3;
+}
+
+/* Typography Cards */
+.typography-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.typography-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.font-preview {
+    margin-bottom: 16px;
+}
+
+.font-sample-large {
+    font-size: 48px;
+    font-weight: 400;
+    color: #1f2937;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.font-sample-text {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.font-details {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 12px;
+}
+
+.font-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+.font-confidence {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.confidence-bar {
+    width: 60px;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+
+.confidence-text {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Typography Specifications */
+.specs-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.spec-section {
+    margin-bottom: 20px;
+}
+
+.spec-section:last-child {
+    margin-bottom: 0;
+}
+
+.spec-heading {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.spec-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.spec-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.spec-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.font-weight-demo {
+    font-family: inherit;
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.font-size-demo {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 13px;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .brand-color-card {
+        min-width: 100px;
+        margin-bottom: 20px;
+    }
+
+    .color-preview {
+        width: 60px;
+        height: 60px;
+    }
+
+    .typography-card {
+        margin-bottom: 20px;
+    }
+
+    .font-sample-large {
+        font-size: 36px;
+    }
+}
+</style>
+{% endblock %}
+
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -375,6 +750,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon.classList.add('fa-download');
                 }, 2000);
             }
+        });
+    });
+
+    // Copy hex color to clipboard functionality
+    const colorHexes = document.querySelectorAll('.color-hex');
+    colorHexes.forEach(hex => {
+        hex.addEventListener('click', function() {
+            const hexValue = this.textContent;
+            navigator.clipboard.writeText(hexValue).then(() => {
+                const original = this.textContent;
+                this.textContent = 'Copied!';
+                this.style.color = '#10b981';
+                setTimeout(() => {
+                    this.textContent = original;
+                    this.style.color = '#1f2937';
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = hexValue;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+
+                const original = this.textContent;
+                this.textContent = 'Copied!';
+                this.style.color = '#10b981';
+                setTimeout(() => {
+                    this.textContent = original;
+                    this.style.color = '#1f2937';
+                }, 2000);
+            });
         });
     });
 });

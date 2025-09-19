@@ -79,6 +79,40 @@ class BaseAgent(ABC):
         domain = url.replace('https://', '').replace('http://', '')
         domain = domain.replace('www.', '').split('/')[0]
         return domain.replace('.', '-')
+
+    def load_prompt_from_md(self, agent_name: str, prompts_dir: str = ".claude/agents") -> Optional[str]:
+        """
+        Load AI instructions/prompt from a markdown file.
+
+        Args:
+            agent_name: Name of the agent (e.g., 'business-intelligence-analyzer')
+            prompts_dir: Directory containing the prompt markdown files
+
+        Returns:
+            The prompt content as string, or None if file not found
+        """
+        try:
+            prompt_file = Path(prompts_dir) / f"{agent_name}.md"
+
+            if not prompt_file.exists():
+                self.logger.warning(f"Prompt file not found: {prompt_file}")
+                return None
+
+            with open(prompt_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Remove YAML front matter if present (everything between --- lines)
+            if content.startswith('---'):
+                parts = content.split('---', 2)
+                if len(parts) >= 3:
+                    content = parts[2].strip()
+
+            self.logger.info(f"Loaded prompt from {prompt_file}")
+            return content
+
+        except Exception as e:
+            self.logger.error(f"Error loading prompt from {agent_name}.md: {e}")
+            return None
     
     @abstractmethod
     def process(self, url: str, **kwargs) -> Dict[str, Any]:

@@ -127,8 +127,18 @@ class ScreenshotAnalyzer(BaseAgent):
             self.logger.error(f"Error capturing screenshot: {e}")
             raise
 
-    def analyze_screenshot_with_ai(self, image_path: str, url: str) -> Dict[str, Any]:
-        """Analyze screenshot using AI vision with professional design analysis."""
+    def analyze_screenshot_with_ai(self, image_path: str, url: str, prompt_file: str = None) -> Dict[str, Any]:
+        """
+        Analyze screenshot using AI vision with professional design analysis and dynamic prompts.
+
+        Args:
+            image_path: Path to the screenshot image file
+            url: The website URL
+            prompt_file: Optional agent name for loading .md prompts (defaults to this agent's name)
+
+        Returns:
+            Screenshot design analysis data
+        """
 
         if not self.ai_provider:
             self.logger.error("AI provider is None - using fallback analysis")
@@ -148,8 +158,16 @@ class ScreenshotAnalyzer(BaseAgent):
             return self._fallback_analysis(url)
 
         try:
-            # Clear, focused analysis prompt for the AI
-            analysis_prompt = f"""
+            # Try to load analysis prompt from markdown file
+            agent_name = prompt_file or self.name
+            dynamic_prompt = self.load_prompt_from_md(agent_name)
+
+            if dynamic_prompt:
+                # Use dynamic prompt from markdown file
+                analysis_prompt = f"{dynamic_prompt}\n\nAnalyze this website screenshot for {url}."
+            else:
+                # Fallback to original hardcoded prompt
+                analysis_prompt = f"""
 You are a professional brand designer analyzing this website screenshot for {url}.
 
 CRITICAL REQUIREMENTS:
@@ -243,6 +261,7 @@ IMPORTANT: Analyze the ACTUAL screenshot content. Extract REAL colors you observ
                     "timestamp": self.get_timestamp(),
                     "analysis_method": "ai_vision_analysis",
                     "ai_provider": os.getenv('AI_WEB_ANALYSIS_PROVIDER', 'claude'),
+                    "prompt_source": f"{agent_name}.md" if dynamic_prompt else "default",
                     "screenshot_api_request": f"{self.screenshot_endpoint}?url={url}&access_key=***&format=png&viewport_width=375&viewport_height=812&device_scale_factor=2&full_page=true&block_cookie_banners=true&block_ads=true"
                 })
 
@@ -305,8 +324,18 @@ IMPORTANT: Analyze the ACTUAL screenshot content. Extract REAL colors you observ
             "note": "Fallback analysis used - screenshot API or AI analysis unavailable"
         }
     
-    def process(self, url: str, **kwargs) -> Dict[str, Any]:
-        """Process URL and return comprehensive screenshot analysis."""
+    def process(self, url: str, prompt_file: str = None, **kwargs) -> Dict[str, Any]:
+        """
+        Process URL and return comprehensive screenshot analysis.
+
+        Args:
+            url: The website URL to analyze
+            prompt_file: Optional agent name for loading .md prompts (e.g., 'screenshot-analyzer')
+            **kwargs: Additional parameters
+
+        Returns:
+            Screenshot design analysis data
+        """
         # Log any additional parameters passed
         if kwargs:
             self.logger.info(f"Processing with additional parameters: {kwargs}")
@@ -316,8 +345,8 @@ IMPORTANT: Analyze the ACTUAL screenshot content. Extract REAL colors you observ
             # Capture screenshot using bash/curl method
             temp_file = self.capture_screenshot_with_bash(url)
 
-            # Analyze screenshot with AI vision
-            analysis = self.analyze_screenshot_with_ai(temp_file, url)
+            # Analyze screenshot with AI vision using optional custom prompt
+            analysis = self.analyze_screenshot_with_ai(temp_file, url, prompt_file)
 
             # Add image dimensions if available
             if temp_file and os.path.exists(temp_file):

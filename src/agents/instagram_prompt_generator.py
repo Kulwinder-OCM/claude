@@ -9,58 +9,103 @@ class InstagramPromptGenerator(BaseAgent):
     def __init__(self):
         super().__init__("instagram-prompt-generator", "metrics")
     
-    def create_gemini_prompt(self, post: Dict[str, Any], design_guidelines: Dict[str, Any], company_name: str) -> str:
-        """Create a detailed Gemini prompt for image generation."""
+    def create_gemini_prompt(self, post: Dict[str, Any], design_guidelines: Dict[str, Any], company_name: str, prompt_file: str = None) -> str:
+        """
+        Create a detailed Gemini prompt for image generation using dynamic templates.
 
-        # Extract comprehensive design colors from screenshot analysis
-        color_kit = design_guidelines.get("colors", {})  # Updated path for nested structure
-        background_color = color_kit.get("background", {}).get("hex", "#FFFFFF")
-        brand_primary = color_kit.get("brand_primary", {}).get("hex", "#007AFF")
-        text_primary = color_kit.get("text_primary", {}).get("hex", "#1D1D1F")
-        text_secondary = color_kit.get("text_secondary", {}).get("hex", "#666666")
+        Args:
+            post: Instagram post data
+            design_guidelines: Design analysis data
+            company_name: Company name
+            prompt_file: Optional agent name for loading .md prompts (defaults to this agent's name)
 
-        # Extract accent colors for additional visual elements
-        accent_colors = color_kit.get("accent_colors", [])
-        accent_color = accent_colors[0].get("hex", "#E5E5E5") if accent_colors else "#E5E5E5"
+        Returns:
+            Generated Gemini prompt for image creation
+        """
+        # Try to load prompt template from markdown file
+        agent_name = prompt_file or self.name
+        dynamic_prompt = self.load_prompt_from_md(agent_name)
 
-        # Extract additional colors for variety
-        additional_colors = color_kit.get("additional_colors", [])
+        if dynamic_prompt:
+            # Use dynamic prompt from markdown file with variable substitution
+            # Extract key data for template substitution
+            color_kit = design_guidelines.get("colors", {})
+            background_color = color_kit.get("background", {}).get("hex", "#FFFFFF")
+            brand_primary = color_kit.get("brand_primary", {}).get("hex", "#007AFF")
+            text_primary = color_kit.get("text_primary", {}).get("hex", "#1D1D1F")
+            text_secondary = color_kit.get("text_secondary", {}).get("hex", "#666666")
 
-        # Extract comprehensive typography info from screenshot analysis
-        typography = design_guidelines.get("typography", {})  # Updated path
-        font_classification = typography.get("classification", "modern sans-serif")
+            typography = design_guidelines.get("typography", {})
+            font_classification = typography.get("classification", "modern sans-serif")
 
-        # Get specific font families with confidence scores
-        font_families = typography.get("likely_families", [])
-        primary_font = font_families[0].get("name", "Inter") if font_families else "Inter"
-        font_confidence = font_families[0].get("confidence", 0.8) if font_families else 0.8
+            # Basic variable substitution
+            prompt = dynamic_prompt.format(
+                company_name=company_name,
+                headline=post.get('headline', 'Professional Services'),
+                subtext=post.get('subtext', ''),
+                call_to_action=post.get('call_to_action', 'Learn More'),
+                background_color=background_color,
+                brand_primary=brand_primary,
+                text_primary=text_primary,
+                text_secondary=text_secondary,
+                font_classification=font_classification,
+                visual_focus=post.get('visual_focus', 'Clean professional design matching brand aesthetic'),
+                target_emotion=post.get('target_emotion', 'Professional'),
+                content_type=post.get('content_type', 'Brand')
+            )
 
-        # Use high-confidence fonts, fallback to classification if low confidence
-        if font_confidence >= 0.7:
-            font_style = f"{primary_font} (or similar {font_classification})"
+            return prompt
         else:
-            font_style = f"{font_classification} (similar to {primary_font})"
-        
-        # Create color palette description for the AI
-        color_palette_desc = f"""
+            # Fallback to original hardcoded template
+            # Extract comprehensive design colors from screenshot analysis
+            color_kit = design_guidelines.get("colors", {})  # Updated path for nested structure
+            background_color = color_kit.get("background", {}).get("hex", "#FFFFFF")
+            brand_primary = color_kit.get("brand_primary", {}).get("hex", "#007AFF")
+            text_primary = color_kit.get("text_primary", {}).get("hex", "#1D1D1F")
+            text_secondary = color_kit.get("text_secondary", {}).get("hex", "#666666")
+
+            # Extract accent colors for additional visual elements
+            accent_colors = color_kit.get("accent_colors", [])
+            accent_color = accent_colors[0].get("hex", "#E5E5E5") if accent_colors else "#E5E5E5"
+
+            # Extract additional colors for variety
+            additional_colors = color_kit.get("additional_colors", [])
+
+            # Extract comprehensive typography info from screenshot analysis
+            typography = design_guidelines.get("typography", {})  # Updated path
+            font_classification = typography.get("classification", "modern sans-serif")
+
+            # Get specific font families with confidence scores
+            font_families = typography.get("likely_families", [])
+            primary_font = font_families[0].get("name", "Inter") if font_families else "Inter"
+            font_confidence = font_families[0].get("confidence", 0.8) if font_families else 0.8
+
+            # Use high-confidence fonts, fallback to classification if low confidence
+            if font_confidence >= 0.7:
+                font_style = f"{primary_font} (or similar {font_classification})"
+            else:
+                font_style = f"{font_classification} (similar to {primary_font})"
+
+            # Create color palette description for the AI
+            color_palette_desc = f"""
 BRAND COLOR PALETTE (extracted from actual website):
 - Primary Background: {background_color}
 - Brand Primary: {brand_primary} (CRITICAL: use this exact color for buttons, CTAs, and key brand elements)
 - Text Primary: {text_primary} (main headings, important text)
 - Text Secondary: {text_secondary} (body text, descriptions)"""
 
-        if accent_colors:
-            accent_desc = "\n- Accent Colors: "
-            for i, accent in enumerate(accent_colors[:2]):  # Use up to 2 accent colors
-                accent_desc += f"{accent.get('hex', '#E5E5E5')} ({accent.get('role', 'accent')})"
-                if i < len(accent_colors[:2]) - 1:
-                    accent_desc += ", "
-            color_palette_desc += accent_desc
+            if accent_colors:
+                accent_desc = "\n- Accent Colors: "
+                for i, accent in enumerate(accent_colors[:2]):  # Use up to 2 accent colors
+                    accent_desc += f"{accent.get('hex', '#E5E5E5')} ({accent.get('role', 'accent')})"
+                    if i < len(accent_colors[:2]) - 1:
+                        accent_desc += ", "
+                color_palette_desc += accent_desc
 
-        if additional_colors:
-            color_palette_desc += f"\n- Additional Colors: {', '.join([c.get('hex', '#E5E5E5') for c in additional_colors[:2]])}"
+            if additional_colors:
+                color_palette_desc += f"\n- Additional Colors: {', '.join([c.get('hex', '#E5E5E5') for c in additional_colors[:2]])}"
 
-        prompt = f"""Create a professional Instagram post image (1080x1080 pixels) based on REAL brand analysis:
+            prompt = f"""Create a professional Instagram post image (1080x1080 pixels) based on REAL brand analysis:
 
 LAYOUT & COMPOSITION:
 - Canvas: Perfect 1080x1080 square format
@@ -108,28 +153,40 @@ TECHNICAL REQUIREMENTS:
 
 IMPORTANT: This design MUST use the actual extracted brand colors and fonts from the website analysis. Create an image that looks like it belongs to this specific brand's visual identity system."""
 
-        return prompt
+            return prompt
     
-    def generate_prompts(self, social_content: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate Gemini prompts for all Instagram posts."""
-        
+    def generate_prompts(self, social_content: Dict[str, Any], prompt_file: str = None) -> Dict[str, Any]:
+        """
+        Generate Gemini prompts for all Instagram posts using dynamic templates.
+
+        Args:
+            social_content: Social content strategy data
+            prompt_file: Optional agent name for loading .md prompts (defaults to this agent's name)
+
+        Returns:
+            Generated prompts data
+        """
+
         company_name = social_content.get("company_name", "Company")
         design_guidelines = social_content.get("design_guidelines", {})
         posts = social_content.get("instagram_posts", [])
-        
+
+        agent_name = prompt_file or self.name
+
         prompts_data = {
             "company_name": company_name,
             "timestamp": self.get_timestamp(),
             "total_prompts": len(posts),
             "design_guidelines_applied": design_guidelines,
+            "prompt_source": f"{agent_name}.md" if prompt_file else "default",
             "prompts": []
         }
-        
-        for post in posts:
-            gemini_prompt = self.create_gemini_prompt(post, design_guidelines, company_name)
-            
+
+        for index, post in enumerate(posts, 1):
+            gemini_prompt = self.create_gemini_prompt(post, design_guidelines, company_name, prompt_file)
+
             prompt_data = {
-                "post_number": post.get("post_number", 1),
+                "post_number": post.get("post_number", index),  # Use sequential index if no post_number provided
                 "concept": post.get("concept", "Brand"),
                 "headline": post.get("headline", ""),
                 "gemini_prompt": gemini_prompt,
@@ -142,28 +199,39 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
                     "layout": design_guidelines.get("layout_style", {})
                 }
             }
-            
+
             prompts_data["prompts"].append(prompt_data)
-        
+
         return prompts_data
     
-    def process(self, url: str, social_content: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
-        """Process and generate Instagram prompts."""
+    def process(self, url: str, social_content: Dict[str, Any] = None, prompt_file: str = None, **kwargs) -> Dict[str, Any]:
+        """
+        Process and generate Instagram prompts.
+
+        Args:
+            url: The website URL
+            social_content: Social content strategy data
+            prompt_file: Optional agent name for loading .md prompts (e.g., 'instagram-prompt-generator')
+            **kwargs: Additional parameters
+
+        Returns:
+            Generated Instagram prompts data
+        """
         try:
             if not social_content:
                 raise ValueError("social_content is required")
-            
-            # Generate prompts
-            prompts_data = self.generate_prompts(social_content)
-            
+
+            # Generate prompts with optional custom template
+            prompts_data = self.generate_prompts(social_content, prompt_file)
+
             # Save prompts
             domain = self.sanitize_domain(url)
             filename = self.get_output_filename(domain)
             self.save_json(prompts_data, filename, "instagram-prompts")
-            
+
             self.logger.info(f"Instagram prompts generated for {url}")
             return prompts_data
-            
+
         except Exception as e:
             self.logger.error(f"Error generating Instagram prompts for {url}: {e}")
             return {"error": str(e), "url": url}

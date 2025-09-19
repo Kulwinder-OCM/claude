@@ -38,10 +38,10 @@ class BrandImageGenerator(BaseAgent):
     
     def generate_images(self, prompts_data: Dict[str, Any], domain: str) -> Dict[str, Any]:
         """Generate all Instagram images from prompts."""
-        
+
         company_name = prompts_data.get("company_name", "Company")
         prompts = prompts_data.get("prompts", [])
-        
+
         generation_results = {
             "company_name": company_name,
             "domain": domain,
@@ -52,26 +52,26 @@ class BrandImageGenerator(BaseAgent):
             "images": [],
             "generation_status": "completed"
         }
-        
+
         for index, prompt_info in enumerate(prompts, 1):
             post_number = index  # Use incremental counter instead of prompt's post_number
             gemini_prompt = prompt_info.get("gemini_prompt", "")
-            
+
             try:
                 # Generate image
                 self.logger.info(f"Generating image {post_number} for {company_name}")
-                
+
                 try:
                     # Use AI provider for image generation
                     image_data = self.generate_image_with_ai(gemini_prompt)
                 except Exception as img_error:
                     self.logger.warning(f"AI image generation failed: {img_error}, using placeholder")
                     image_data = b"placeholder_instagram_image_data"
-                
+
                 # Save image
                 filename = f"{domain}-post-{post_number}.png"
                 filepath = self.save_image(image_data, filename, domain)
-                
+
                 image_result = {
                     "post_number": post_number,
                     "concept": prompt_info.get("concept", ""),
@@ -81,9 +81,9 @@ class BrandImageGenerator(BaseAgent):
                     "generation_status": "success",
                     "file_size": len(image_data)
                 }
-                
+
                 generation_results["images"].append(image_result)
-                
+
             except Exception as e:
                 self.logger.error(f"Error generating image {post_number}: {e}")
                 error_result = {
@@ -92,27 +92,41 @@ class BrandImageGenerator(BaseAgent):
                     "error": str(e)
                 }
                 generation_results["images"].append(error_result)
-        
+
         return generation_results
     
     def process(self, url: str, prompts_data: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
-        """Process and generate brand images."""
+        """
+        Process and generate brand images.
+
+        Args:
+            url: The website URL
+            prompts_data: Instagram prompts data with generated prompts
+            **kwargs: Additional parameters
+
+        Returns:
+            Image generation results data
+
+        Note:
+            This agent uses pre-generated prompts from instagram_prompt_generator.
+            Dynamic prompt loading from .md files is supported by other agents in the pipeline.
+        """
         try:
             if not prompts_data:
                 raise ValueError("prompts_data is required")
-            
+
             domain = self.sanitize_domain(url)
-            
+
             # Generate images
             generation_results = self.generate_images(prompts_data, domain)
-            
+
             # Save generation log
             filename = self.get_output_filename(domain)
             self.save_json(generation_results, filename, f"images/{domain}")
-            
+
             self.logger.info(f"Image generation completed for {url}")
             return generation_results
-            
+
         except Exception as e:
             self.logger.error(f"Error generating images for {url}: {e}")
             return {"error": str(e), "url": url}

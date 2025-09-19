@@ -12,27 +12,41 @@ class SocialContentCreator(BaseAgent):
         super().__init__("social-content-creator", "metrics")
         self.ai_provider = AIProviderFactory.get_configured_provider(AICapability.CONTENT_STRATEGY)
     
-    def create_social_content(self, business_intel: Dict[str, Any], design_analysis: Dict[str, Any]) -> Dict[str, Any]:
-        """Create social media content using AI analysis."""
+    def create_social_content(self, business_intel: Dict[str, Any], design_analysis: Dict[str, Any], prompt_file: str = None) -> Dict[str, Any]:
+        """
+        Create social media content using AI analysis with dynamic prompts.
+
+        Args:
+            business_intel: Business intelligence data
+            design_analysis: Design analysis data
+            prompt_file: Optional agent name for loading .md prompts (defaults to this agent's name)
+
+        Returns:
+            Social media content strategy data
+        """
         try:
-            # Use AI provider for intelligent content strategy
-            social_content = self.ai_provider.create_content_strategy(business_intel, design_analysis)
-            
+            # Use the prompt_file parameter or default to this agent's name
+            agent_name = prompt_file or self.name
+
+            # Use AI provider for intelligent content strategy with dynamic prompts
+            social_content = self.ai_provider.create_content_strategy(business_intel, design_analysis, agent_name=agent_name)
+
             # Add metadata
             social_content.update({
                 "timestamp": self.get_timestamp(),
                 "creation_method": "ai_enhanced",
                 "ai_model": self.ai_provider.model,
                 "ai_provider": self.ai_provider.name,
+                "prompt_source": f"{agent_name}.md" if prompt_file else "default",
                 "design_guidelines": {
                     "colors": design_analysis.get("color_kit", {}),
                     "typography": design_analysis.get("typography_kit", {}),
                     "layout_style": design_analysis.get("composition", {})
                 }
             })
-            
+
             return social_content
-            
+
         except Exception as e:
             self.logger.warning(f"AI content creation failed, falling back to template: {e}")
             return self._template_based_content(business_intel, design_analysis)
@@ -105,23 +119,35 @@ class SocialContentCreator(BaseAgent):
             }
         }
     
-    def process(self, url: str, business_intel: Dict[str, Any] = None, design_analysis: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
-        """Process and create social media content."""
+    def process(self, url: str, business_intel: Dict[str, Any] = None, design_analysis: Dict[str, Any] = None, prompt_file: str = None, **kwargs) -> Dict[str, Any]:
+        """
+        Process and create social media content.
+
+        Args:
+            url: The website URL
+            business_intel: Business intelligence data
+            design_analysis: Design analysis data
+            prompt_file: Optional agent name for loading .md prompts (e.g., 'social-media-content-creator')
+            **kwargs: Additional parameters
+
+        Returns:
+            Social media content strategy data
+        """
         try:
             if not business_intel or not design_analysis:
                 raise ValueError("Both business_intel and design_analysis are required")
-            
-            # Create social content
-            social_content = self.create_social_content(business_intel, design_analysis)
-            
+
+            # Create social content with optional custom prompt
+            social_content = self.create_social_content(business_intel, design_analysis, prompt_file)
+
             # Save content
             domain = self.sanitize_domain(url)
             filename = self.get_output_filename(domain)
             self.save_json(social_content, filename, "social-content")
-            
+
             self.logger.info(f"Social content creation completed for {url}")
             return social_content
-            
+
         except Exception as e:
             self.logger.error(f"Error creating social content for {url}: {e}")
             return {"error": str(e), "url": url}

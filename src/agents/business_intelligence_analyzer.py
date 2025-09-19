@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from typing import Dict, Any
 from .base_agent import BaseAgent
 from ai_providers.ai_factory import AIProviderFactory
-from ai_providers.base_provider import AICapability
+from ai_providers.base_provider import AICapability 
 
 class BusinessIntelligenceAnalyzer(BaseAgent):
     """Gathers comprehensive business intelligence about companies."""
@@ -26,11 +26,24 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
         
         return response.text
     
-    def extract_business_info(self, html_content: str, url: str) -> Dict[str, Any]:
-        """Extract business information using AI analysis."""
+    def extract_business_info(self, html_content: str, url: str, prompt_file: str = None) -> Dict[str, Any]:
+        """
+        Extract business information using AI analysis with dynamic prompts.
+
+        Args:
+            html_content: The HTML content to analyze
+            url: The website URL
+            prompt_file: Optional agent name for loading .md prompts (defaults to this agent's name)
+
+        Returns:
+            Business intelligence analysis data
+        """
         try:
-            # Use AI provider for intelligent analysis
-            business_intel = self.ai_provider.analyze_website(html_content, url)
+            # Use the prompt_file parameter or default to this agent's name
+            agent_name = prompt_file or self.name
+
+            # Use AI provider for intelligent analysis with dynamic prompts
+            business_intel = self.ai_provider.analyze_website(html_content, url, agent_name=agent_name)
 
             # Check if we got a valid business intelligence response
             if "parsing_error" in business_intel or "raw_analysis" in business_intel:
@@ -43,7 +56,8 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
                 "timestamp": self.get_timestamp(),
                 "analysis_method": "ai_enhanced",
                 "ai_model": self.ai_provider.model,
-                "ai_provider": self.ai_provider.name
+                "ai_provider": self.ai_provider.name,
+                "prompt_source": f"{agent_name}.md" if prompt_file else "default"
             })
 
             return business_intel
@@ -121,23 +135,33 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
             }
         }
     
-    def process(self, url: str, **kwargs) -> Dict[str, Any]:
-        """Process URL and return business intelligence analysis."""
+    def process(self, url: str, prompt_file: str = None, **kwargs) -> Dict[str, Any]:
+        """
+        Process URL and return business intelligence analysis.
+
+        Args:
+            url: The website URL to analyze
+            prompt_file: Optional agent name for loading .md prompts (e.g., 'business-intelligence-analyzer')
+            **kwargs: Additional parameters
+
+        Returns:
+            Business intelligence analysis data
+        """
         try:
             # Fetch website content
             html_content = self.fetch_website_content(url)
-            
-            # Extract business information
-            business_intel = self.extract_business_info(html_content, url)
-            
+
+            # Extract business information with optional custom prompt
+            business_intel = self.extract_business_info(html_content, url, prompt_file)
+
             # Save analysis
             domain = self.sanitize_domain(url)
             filename = self.get_output_filename(domain)
             self.save_json(business_intel, filename, "companies")
-            
+
             self.logger.info(f"Business intelligence analysis completed for {url}")
             return business_intel
-            
+
         except Exception as e:
             self.logger.error(f"Error processing {url}: {e}")
             return {"error": str(e), "url": url}

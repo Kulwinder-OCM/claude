@@ -3,7 +3,8 @@
 import requests
 import json
 import os
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
+from pathlib import Path
 from .base_provider import BaseAIProvider, AICapability
 
 class ClaudeProvider(BaseAIProvider):
@@ -20,6 +21,37 @@ class ClaudeProvider(BaseAIProvider):
         if not api_key:
             raise ValueError("CLAUDE_API_KEY environment variable not set")
         return api_key
+
+    def _load_prompt_from_md(self, agent_name: str, prompts_dir: str = ".claude/agents") -> Optional[str]:
+        """
+        Load AI instructions/prompt from a markdown file.
+
+        Args:
+            agent_name: Name of the agent (e.g., 'business-intelligence-analyzer')
+            prompts_dir: Directory containing the prompt markdown files
+
+        Returns:
+            The prompt content as string, or None if file not found
+        """
+        try:
+            prompt_file = Path(prompts_dir) / f"{agent_name}.md"
+
+            if not prompt_file.exists():
+                return None
+
+            with open(prompt_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Remove YAML front matter if present (everything between --- lines)
+            if content.startswith('---'):
+                parts = content.split('---', 2)
+                if len(parts) >= 3:
+                    content = parts[2].strip()
+
+            return content
+
+        except Exception:
+            return None
     
     def _get_capabilities(self) -> List[AICapability]:
         """Claude capabilities."""
@@ -88,9 +120,27 @@ class ClaudeProvider(BaseAIProvider):
         response = self._make_request(prompt, **kwargs)
         return response["content"][0]["text"]
     
-    def analyze_website(self, html_content: str, url: str, **kwargs) -> Dict[str, Any]:
-        """Analyze website content with Claude."""
-        system_prompt = """You are a business intelligence analyst. Analyze the provided website content and extract comprehensive business information.
+    def analyze_website(self, html_content: str, url: str, agent_name: str = "business-intelligence-analyzer", **kwargs) -> Dict[str, Any]:
+        """
+        Analyze website content with Claude using dynamic prompts from markdown files.
+
+        Args:
+            html_content: The HTML content to analyze
+            url: The website URL
+            agent_name: Name of the agent for loading the corresponding .md prompt file
+            **kwargs: Additional arguments
+
+        Returns:
+            Analyzed business intelligence data
+        """
+        # Try to load system prompt from markdown file
+        dynamic_prompt = self._load_prompt_from_md(agent_name)
+
+        if dynamic_prompt:
+            system_prompt = dynamic_prompt
+        else:
+            # Fallback to original hardcoded prompt
+            system_prompt = """You are a business intelligence analyst. Analyze the provided website content and extract comprehensive business information.
 
 CRITICAL REQUIREMENTS:
 1. Return ONLY a valid JSON object
@@ -253,16 +303,34 @@ Return only the JSON analysis object, no other text."""
             "provider": self.name
         })
 
-    def create_content_strategy(self, business_data: Dict[str, Any], design_data: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
-        """Create social media content strategy with Claude."""
-        system_prompt = """You are a social media strategist. Create Instagram post concepts based on business intelligence and design data.
-        
+    def create_content_strategy(self, business_data: Dict[str, Any], design_data: Dict[str, Any] = None, agent_name: str = "social-media-content-creator", **kwargs) -> Dict[str, Any]:
+        """
+        Create social media content strategy with Claude using dynamic prompts from markdown files.
+
+        Args:
+            business_data: Business intelligence data
+            design_data: Design analysis data
+            agent_name: Name of the agent for loading the corresponding .md prompt file
+            **kwargs: Additional arguments
+
+        Returns:
+            Social media content strategy data
+        """
+        # Try to load system prompt from markdown file
+        dynamic_prompt = self._load_prompt_from_md(agent_name)
+
+        if dynamic_prompt:
+            system_prompt = dynamic_prompt
+        else:
+            # Fallback to original hardcoded prompt
+            system_prompt = """You are a social media strategist. Create Instagram post concepts based on business intelligence and design data.
+
         Return a JSON object with:
         - brand_voice: tone, personality, messaging_style
         - target_audience: demographics, interests, pain_points
         - content_strategy: themes, posting_frequency, best_times
         - instagram_posts: array of 3 post concepts with headline, subtext, call_to_action, content_type, target_emotion
-        
+
         Make content authentic, engaging, and aligned with the brand."""
         
         company_name = business_data.get("company_overview", {}).get("name", "Company")
