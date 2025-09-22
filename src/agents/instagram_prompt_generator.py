@@ -26,50 +26,9 @@ class InstagramPromptGenerator(BaseAgent):
         agent_name = prompt_file or self.name
         dynamic_prompt = self.load_prompt_from_md(agent_name)
 
-        if dynamic_prompt and "{" in dynamic_prompt and "company_name" in dynamic_prompt:
-            # Only use dynamic templating if the prompt actually contains template variables
-            # Extract key data for template substitution
-            color_kit = design_guidelines.get("colors", {})
-            background_color = color_kit.get("background", {}).get("hex", "#FFFFFF")
-            brand_primary = color_kit.get("brand_primary", {}).get("hex", "#007AFF")
-            text_primary = color_kit.get("text_primary", {}).get("hex", "#1D1D1F")
-            text_secondary = color_kit.get("text_secondary", {}).get("hex", "#666666")
-
-            typography = design_guidelines.get("typography", {})
-            font_classification = typography.get("classification", "modern sans-serif")
-
-            # Basic variable substitution - handle both underscore and hyphen variants
-            domain_name = self.sanitize_domain(url) if url else "unknown-domain"
-
-            try:
-                # Replace template variables with both possible formats
-                prompt = dynamic_prompt.replace("{domain-name}", domain_name)
-                prompt = prompt.replace("{date}", self.get_timestamp())
-
-                # Then use format for remaining variables
-                prompt = prompt.format(
-                    company_name=company_name,
-                    domain_name=domain_name,
-                    date=self.get_timestamp(),
-                    headline=post.get('headline', 'Professional Services'),
-                    subtext=post.get('subtext', ''),
-                    call_to_action=post.get('call_to_action', 'Learn More'),
-                    background_color=background_color,
-                    brand_primary=brand_primary,
-                    text_primary=text_primary,
-                    text_secondary=text_secondary,
-                    font_classification=font_classification,
-                    visual_focus=post.get('visual_focus', 'Clean professional design matching brand aesthetic'),
-                    target_emotion=post.get('target_emotion', 'Professional'),
-                    content_type=post.get('content_type', 'Brand')
-                )
-                return prompt
-            except KeyError as e:
-                self.logger.warning(f"Template formatting failed: {e}. Falling back to hardcoded template.")
-                # Fall through to hardcoded template
-
-        # If dynamic prompt loading failed or doesn't contain templates, use hardcoded template
-        else:
+        # Always use the hardcoded template which properly extracts and uses brand colors
+        # The markdown file is for AI instructions, not Python string templates
+        if True:  # Skip dynamic prompt templating to avoid KeyError with JSON braces
             # Fallback to original hardcoded template
             # Extract comprehensive design colors from screenshot analysis
             color_kit = design_guidelines.get("colors", {})  # Updated path for nested structure
