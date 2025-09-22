@@ -15,16 +15,37 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
         self.ai_provider = AIProviderFactory.get_configured_provider(AICapability.WEB_ANALYSIS)
     
     def fetch_website_content(self, url: str) -> str:
-        """Fetch website content."""
+        """Fetch website content with improved headers and error handling."""
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Cache-Control': 'max-age=0'
         }
-        
+
         self.logger.info(f"Fetching content from {url}")
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        
-        return response.text
+        try:
+            response = requests.get(url, headers=headers, timeout=30)
+            response.raise_for_status()
+            return response.text
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 403:
+                self.logger.warning(f"Access forbidden (403) for {url}. Website may block automated requests.")
+                # Return minimal HTML for AI analysis to continue
+                return f"<html><head><title>Access Restricted</title></head><body><h1>Website: {url}</h1><p>Access restricted - unable to fetch content due to 403 Forbidden error. This website likely blocks automated requests.</p></body></html>"
+            else:
+                raise e
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Request failed for {url}: {e}")
+            # Return minimal HTML for AI analysis to continue
+            return f"<html><head><title>Request Failed</title></head><body><h1>Website: {url}</h1><p>Request failed: {str(e)}</p></body></html>"
     
     def extract_business_info(self, html_content: str, url: str, prompt_file: str = None) -> Dict[str, Any]:
         """
