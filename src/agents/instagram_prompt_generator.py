@@ -9,7 +9,7 @@ class InstagramPromptGenerator(BaseAgent):
     def __init__(self):
         super().__init__("instagram-prompt-generator", "metrics")
     
-    def create_gemini_prompt(self, post: Dict[str, Any], design_guidelines: Dict[str, Any], company_name: str, prompt_file: str = None) -> str:
+    def create_gemini_prompt(self, post: Dict[str, Any], design_guidelines: Dict[str, Any], company_name: str, url: str = "", prompt_file: str = None) -> str:
         """
         Create a detailed Gemini prompt for image generation using dynamic templates.
 
@@ -26,8 +26,8 @@ class InstagramPromptGenerator(BaseAgent):
         agent_name = prompt_file or self.name
         dynamic_prompt = self.load_prompt_from_md(agent_name)
 
-        if dynamic_prompt:
-            # Use dynamic prompt from markdown file with variable substitution
+        if dynamic_prompt and "{" in dynamic_prompt and "company_name" in dynamic_prompt:
+            # Only use dynamic templating if the prompt actually contains template variables
             # Extract key data for template substitution
             color_kit = design_guidelines.get("colors", {})
             background_color = color_kit.get("background", {}).get("hex", "#FFFFFF")
@@ -38,23 +38,37 @@ class InstagramPromptGenerator(BaseAgent):
             typography = design_guidelines.get("typography", {})
             font_classification = typography.get("classification", "modern sans-serif")
 
-            # Basic variable substitution
-            prompt = dynamic_prompt.format(
-                company_name=company_name,
-                headline=post.get('headline', 'Professional Services'),
-                subtext=post.get('subtext', ''),
-                call_to_action=post.get('call_to_action', 'Learn More'),
-                background_color=background_color,
-                brand_primary=brand_primary,
-                text_primary=text_primary,
-                text_secondary=text_secondary,
-                font_classification=font_classification,
-                visual_focus=post.get('visual_focus', 'Clean professional design matching brand aesthetic'),
-                target_emotion=post.get('target_emotion', 'Professional'),
-                content_type=post.get('content_type', 'Brand')
-            )
+            # Basic variable substitution - handle both underscore and hyphen variants
+            domain_name = self.sanitize_domain(url) if url else "unknown-domain"
 
-            return prompt
+            try:
+                # Replace template variables with both possible formats
+                prompt = dynamic_prompt.replace("{domain-name}", domain_name)
+                prompt = prompt.replace("{date}", self.get_timestamp())
+
+                # Then use format for remaining variables
+                prompt = prompt.format(
+                    company_name=company_name,
+                    domain_name=domain_name,
+                    date=self.get_timestamp(),
+                    headline=post.get('headline', 'Professional Services'),
+                    subtext=post.get('subtext', ''),
+                    call_to_action=post.get('call_to_action', 'Learn More'),
+                    background_color=background_color,
+                    brand_primary=brand_primary,
+                    text_primary=text_primary,
+                    text_secondary=text_secondary,
+                    font_classification=font_classification,
+                    visual_focus=post.get('visual_focus', 'Clean professional design matching brand aesthetic'),
+                    target_emotion=post.get('target_emotion', 'Professional'),
+                    content_type=post.get('content_type', 'Brand')
+                )
+                return prompt
+            except KeyError as e:
+                self.logger.warning(f"Template formatting failed: {e}. Falling back to hardcoded template.")
+                # Fall through to hardcoded template
+
+        # If dynamic prompt loading failed or doesn't contain templates, use hardcoded template
         else:
             # Fallback to original hardcoded template
             # Extract comprehensive design colors from screenshot analysis
@@ -155,7 +169,7 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
 
             return prompt
     
-    def generate_prompts(self, social_content: Dict[str, Any], prompt_file: str = None) -> Dict[str, Any]:
+    def generate_prompts(self, social_content: Dict[str, Any], url: str = "", prompt_file: str = None) -> Dict[str, Any]:
         """
         Generate Gemini prompts for all Instagram posts using dynamic templates.
 
@@ -183,7 +197,7 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
         }
 
         for index, post in enumerate(posts, 1):
-            gemini_prompt = self.create_gemini_prompt(post, design_guidelines, company_name, prompt_file)
+            gemini_prompt = self.create_gemini_prompt(post, design_guidelines, company_name, url, prompt_file)
 
             prompt_data = {
                 "post_number": post.get("post_number", index),  # Use sequential index if no post_number provided
@@ -222,7 +236,7 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
                 raise ValueError("social_content is required")
 
             # Generate prompts with optional custom template
-            prompts_data = self.generate_prompts(social_content, prompt_file)
+            prompts_data = self.generate_prompts(social_content, url, prompt_file)
 
             # Save prompts
             domain = self.sanitize_domain(url)
