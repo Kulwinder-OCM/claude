@@ -3,6 +3,7 @@
 import requests
 import json
 import os
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 from .base_provider import BaseAIProvider, AICapability
@@ -27,7 +28,7 @@ class ClaudeProvider(BaseAIProvider):
         Load AI instructions/prompt from a markdown file.
 
         Args:
-            agent_name: Name of the agent (e.g., 'business-intelligence-analyzer')
+            agent_name: Name of the agent (e.g., 'business_intelligence_analyzer')
             prompts_dir: Directory containing the prompt markdown files
 
         Returns:
@@ -120,7 +121,7 @@ class ClaudeProvider(BaseAIProvider):
         response = self._make_request(prompt, **kwargs)
         return response["content"][0]["text"]
     
-    def analyze_website(self, html_content: str, url: str, agent_name: str = "business-intelligence-analyzer", **kwargs) -> Dict[str, Any]:
+    def analyze_website(self, html_content: str, url: str, agent_name: str = "business_intelligence_analyzer", **kwargs) -> Dict[str, Any]:
         """
         Analyze website content with Claude using dynamic prompts from markdown files.
 
@@ -139,47 +140,8 @@ class ClaudeProvider(BaseAIProvider):
         if dynamic_prompt:
             system_prompt = dynamic_prompt
         else:
-            # Fallback to original hardcoded prompt
-            system_prompt = """You are a business intelligence analyst. Analyze the provided website content and extract comprehensive business information.
-
-CRITICAL REQUIREMENTS:
-1. Return ONLY a valid JSON object
-2. No explanations, no markdown formatting, no additional text before or after the JSON
-3. Start your response with { and end with }
-4. Do not wrap JSON in code blocks or use ``` markers
-
-Required JSON structure:
-{
-  "company_overview": {
-    "name": "Company Name",
-    "description": "Brief company description",
-    "industry": "Industry sector",
-    "location": "Location if available",
-    "size": "Company size if determinable"
-  },
-  "services_products": {
-    "main_offerings": ["Service 1", "Service 2"],
-    "value_propositions": ["Value prop 1", "Value prop 2"]
-  },
-  "target_market": {
-    "audience": "Primary target audience",
-    "customer_segments": ["Segment 1", "Segment 2"]
-  },
-  "competitive_advantages": ["Advantage 1", "Advantage 2"],
-  "business_model": {
-    "revenue_model": "How they make money",
-    "key_metrics": ["Metric 1", "Metric 2"]
-  },
-  "brand_positioning": {
-    "tone": "Brand tone",
-    "messaging": "Core messaging",
-    "personality": ["Trait 1", "Trait 2"]
-  }
-}
-
-Extract actual information from the website content. If specific information isn't available, use reasonable inferences based on what you can observe.
-
-REMEMBER: Your entire response must be valid JSON starting with { and ending with }."""
+            # Fallback disabled - force md file usage
+            raise ValueError(f"Failed to load prompt from {agent_name}.md file. Fallback disabled - md file is required.")
 
         prompt = f"""Analyze the website content for: {url}
 
@@ -188,7 +150,47 @@ HTML Content:
 
 Return only the JSON analysis object, no other text."""
 
-        response = self._make_request(prompt, system_prompt, **kwargs)
+        # Enhanced retry logic with exponential backoff and jitter
+        import time
+        import random
+        max_retries = 6  # Increased retries for critical business analysis
+        base_delay = 5  # Base delay in seconds
+        last_exception = None
+
+        for attempt in range(max_retries):
+            try:
+                response = self._make_request(prompt, system_prompt, **kwargs)
+                break  # Success, exit retry loop
+            except Exception as e:
+                last_exception = e
+                error_str = str(e).lower()
+
+                # Check for various API overload/error conditions
+                is_retryable = any(error_indicator in error_str for error_indicator in [
+                    "529", "overloaded", "server error", "rate limit", "502", "503", "504",
+                    "timeout", "connection", "temporary", "unavailable"
+                ])
+
+                if is_retryable and attempt < max_retries - 1:
+                    # Exponential backoff with jitter
+                    exponential_delay = base_delay * (2 ** attempt)
+                    jitter = random.uniform(0.5, 1.5)  # Add randomness to avoid thundering herd
+                    wait_time = exponential_delay * jitter
+
+                    print(f"Claude API issue during business analysis: {str(e)[:100]}")
+                    print(f"Retrying in {wait_time:.1f} seconds... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                    continue
+                elif not is_retryable:
+                    # For non-retryable errors (like invalid API key), fail fast
+                    print(f"Non-retryable error: {str(e)}")
+                    raise
+                # If we've exhausted retries for a retryable error, we'll raise below
+
+        else:
+            # If we exhausted all retries, raise the last exception
+            print(f"Exhausted all {max_retries} retry attempts for business intelligence analysis")
+            raise last_exception
 
         # Enhanced JSON parsing with multiple fallback strategies
         try:
@@ -303,7 +305,7 @@ Return only the JSON analysis object, no other text."""
             "provider": self.name
         })
 
-    def create_content_strategy(self, business_data: Dict[str, Any], design_data: Dict[str, Any] = None, agent_name: str = "social-media-content-creator", **kwargs) -> Dict[str, Any]:
+    def create_content_strategy(self, business_data: Dict[str, Any], design_data: Dict[str, Any] = None, agent_name: str = "social_content_creator", **kwargs) -> Dict[str, Any]:
         """
         Create social media content strategy with Claude using dynamic prompts from markdown files.
 
@@ -336,26 +338,31 @@ Return only the JSON analysis object, no other text."""
         company_name = business_data.get("company_overview", {}).get("name", "Company")
         
         prompt = f"""Create a social media content strategy for {company_name}.
-        
+
         Business Intelligence:
         {json.dumps(business_data, indent=2)}
-        
+
         Design Analysis:
         {json.dumps(design_data, indent=2) if design_data else "No design data provided"}
-        
-        Create 3 Instagram post concepts that align with the brand and resonate with their target audience."""
+
+        Create 3 Instagram post concepts that align with the brand and resonate with their target audience.
+
+        IMPORTANT: Return ONLY the JSON object as specified in the system prompt. Do not include any explanatory text, markdown formatting, or other content outside of the JSON structure."""
         
         response = self._make_request(prompt, system_prompt, **kwargs)
         
         # Parse response
+        raw_response_text = response["content"][0]["text"]
         try:
-            content_text = response["content"][0]["text"]
+            content_text = raw_response_text
             if "```json" in content_text:
                 json_start = content_text.find("```json") + 7
                 json_end = content_text.find("```", json_start)
                 content_text = content_text[json_start:json_end]
-            
+
             content_strategy = json.loads(content_text)
+            # Add raw response to successful parsing
+            content_strategy["raw_response"] = raw_response_text
         except (json.JSONDecodeError, KeyError):
             # Fallback structure
             content_strategy = {
@@ -397,7 +404,7 @@ Return only the JSON analysis object, no other text."""
                         "target_emotion": "Confidence"
                     }
                 ],
-                "raw_response": response["content"][0]["text"]
+                "raw_response": raw_response_text
             }
         
         content_strategy.update({
@@ -406,6 +413,94 @@ Return only the JSON analysis object, no other text."""
         })
 
         return content_strategy
+
+    def generate_instagram_prompts(self, social_content: Dict[str, Any], url: str = "", agent_name: str = "instagram_prompt_generator", **kwargs) -> Dict[str, Any]:
+        """
+        Generate Instagram prompts using Claude with dynamic prompts from markdown files.
+
+        Args:
+            social_content: Social content strategy data
+            url: Website URL
+            agent_name: Name of the agent for loading the corresponding .md prompt file
+
+        Returns:
+            Instagram prompts data
+        """
+        # Try to load system prompt from markdown file
+        dynamic_prompt = self._load_prompt_from_md(agent_name)
+
+        if dynamic_prompt:
+            system_prompt = dynamic_prompt
+        else:
+            # Fallback disabled - force md file usage
+            raise ValueError(f"Failed to load prompt from {agent_name}.md file. Fallback disabled - md file is required.")
+
+        company_name = social_content.get("company_name", "Company")
+
+        prompt = f"""Generate Instagram image prompts for {company_name}.
+
+        Social Content Data:
+        {json.dumps(social_content, indent=2)}
+
+        URL: {url}
+
+        Create 3 detailed Gemini prompts for Instagram image generation that align with the brand and social content strategy."""
+
+        response = self._make_request(prompt, system_prompt, **kwargs)
+
+        # Parse response
+        raw_response_text = response["content"][0]["text"]
+        try:
+            content_text = raw_response_text
+            if "```json" in content_text:
+                json_start = content_text.find("```json") + 7
+                json_end = content_text.find("```", json_start)
+                content_text = content_text[json_start:json_end]
+
+            prompts_data = json.loads(content_text)
+            # Add raw response to successful parsing
+            prompts_data["raw_response"] = raw_response_text
+        except (json.JSONDecodeError, KeyError):
+            # Fallback structure
+            prompts_data = {
+                "company_name": company_name,
+                "timestamp": datetime.now().strftime("%Y-%m-%d"),
+                "total_prompts": 3,
+                "prompts": [
+                    {
+                        "post_number": 1,
+                        "concept": "Brand Expertise",
+                        "headline": f"Expert Solutions from {company_name}",
+                        "gemini_prompt": "Create a professional 1080x1080 Instagram post with brand colors and typography",
+                        "target_emotion": "Trust",
+                        "content_type": "Educational"
+                    },
+                    {
+                        "post_number": 2,
+                        "concept": "Innovation Focus",
+                        "headline": "Innovation Meets Excellence",
+                        "gemini_prompt": "Create a professional 1080x1080 Instagram post with brand colors and typography",
+                        "target_emotion": "Inspiration",
+                        "content_type": "Brand Story"
+                    },
+                    {
+                        "post_number": 3,
+                        "concept": "Results & Impact",
+                        "headline": "Results That Matter",
+                        "gemini_prompt": "Create a professional 1080x1080 Instagram post with brand colors and typography",
+                        "target_emotion": "Confidence",
+                        "content_type": "Social Proof"
+                    }
+                ],
+                "raw_response": raw_response_text
+            }
+
+        prompts_data.update({
+            "model": self.model,
+            "provider": self.name
+        })
+
+        return prompts_data
 
     def analyze_image_with_text(self, image_path: str, prompt: str, **kwargs) -> str:
         """Analyze image with text prompt using Claude Vision."""

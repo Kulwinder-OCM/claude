@@ -11,7 +11,7 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
     """Gathers comprehensive business intelligence about companies."""
     
     def __init__(self):
-        super().__init__("business-intelligence-analyzer", "metrics")
+        super().__init__("business_intelligence_analyzer", "metrics")
         self.ai_provider = AIProviderFactory.get_configured_provider(AICapability.WEB_ANALYSIS)
     
     def fetch_website_content(self, url: str) -> str:
@@ -68,8 +68,8 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
 
             # Check if we got a valid business intelligence response
             if "parsing_error" in business_intel or "raw_analysis" in business_intel:
-                self.logger.warning("AI provider returned parsing error, falling back to basic extraction")
-                return self._basic_extraction(html_content, url)
+                self.logger.error("AI provider returned parsing error - fallback disabled, forcing retry")
+                raise Exception(f"AI parsing failed: {business_intel.get('parsing_error', 'Raw analysis returned')}")
 
             # Ensure required structure and add metadata
             business_intel.update({
@@ -84,8 +84,11 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
             return business_intel
 
         except Exception as e:
-            self.logger.warning(f"AI analysis failed, falling back to basic extraction: {e}")
-            return self._basic_extraction(html_content, url)
+            # Comment out fallback - force AI analysis to work
+            # self.logger.warning(f"AI analysis failed, falling back to basic extraction: {e}")
+            # return self._basic_extraction(html_content, url)
+            self.logger.error(f"AI analysis failed and fallback disabled: {e}")
+            raise e  # Re-raise to force retry at higher level
     
     def _basic_extraction(self, html_content: str, url: str) -> Dict[str, Any]:
         """Fallback basic extraction method."""
@@ -162,30 +165,43 @@ class BusinessIntelligenceAnalyzer(BaseAgent):
 
         Args:
             url: The website URL to analyze
-            prompt_file: Optional agent name for loading .md prompts (e.g., 'business-intelligence-analyzer')
+            prompt_file: Optional agent name for loading .md prompts (e.g., 'business_intelligence_analyzer')
             **kwargs: Additional parameters
 
         Returns:
             Business intelligence analysis data
         """
-        try:
-            # Fetch website content
-            html_content = self.fetch_website_content(url)
+        import time
+        import random
 
-            # Extract business information with optional custom prompt
-            business_intel = self.extract_business_info(html_content, url, prompt_file)
+        max_attempts = 3  # Process-level retry attempts
+        for attempt in range(max_attempts):
+            try:
+                # Fetch website content
+                html_content = self.fetch_website_content(url)
 
-            # Save analysis
-            domain = self.sanitize_domain(url)
-            filename = self.get_output_filename(domain)
-            self.save_json(business_intel, filename, "companies")
+                # Extract business information with optional custom prompt
+                business_intel = self.extract_business_info(html_content, url, prompt_file)
 
-            self.logger.info(f"Business intelligence analysis completed for {url}")
-            return business_intel
+                # Save analysis
+                domain = self.sanitize_domain(url)
+                filename = self.get_output_filename(domain)
+                self.save_json(business_intel, filename, "companies")
 
-        except Exception as e:
-            self.logger.error(f"Error processing {url}: {e}")
-            return {"error": str(e), "url": url}
+                self.logger.info(f"Business intelligence analysis completed for {url}")
+                return business_intel
+
+            except Exception as e:
+                if attempt < max_attempts - 1:
+                    wait_time = (attempt + 1) * 10 + random.uniform(1, 5)  # 10-15s, 20-25s
+                    self.logger.warning(f"Business analysis attempt {attempt + 1} failed for {url}: {e}")
+                    self.logger.info(f"Retrying in {wait_time:.1f} seconds...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    # All attempts failed - this should not happen with fallback disabled
+                    self.logger.error(f"All {max_attempts} attempts failed for {url}: {e}")
+                    raise e  # Re-raise the final exception
     
     def get_output_filename(self, domain: str) -> str:
         """Generate output filename for business intelligence."""

@@ -9,7 +9,7 @@ class SocialContentCreator(BaseAgent):
     """Creates Instagram post concepts based on business intelligence."""
     
     def __init__(self):
-        super().__init__("social-content-creator", "metrics")
+        super().__init__("social_content_creator", "metrics")
         self.ai_provider = AIProviderFactory.get_configured_provider(AICapability.CONTENT_STRATEGY)
     
     def create_social_content(self, business_intel: Dict[str, Any], design_analysis: Dict[str, Any], prompt_file: str = None) -> Dict[str, Any]:
@@ -48,8 +48,9 @@ class SocialContentCreator(BaseAgent):
             return social_content
 
         except Exception as e:
-            self.logger.warning(f"AI content creation failed, falling back to template: {e}")
-            return self._template_based_content(business_intel, design_analysis)
+            # Fallback disabled - force md file usage
+            self.logger.error(f"AI content creation failed and fallback disabled: {e}")
+            raise e  # Re-raise to force retry or proper error handling
     
     def _template_based_content(self, business_intel: Dict[str, Any], design_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Fallback template-based content creation."""
@@ -127,7 +128,7 @@ class SocialContentCreator(BaseAgent):
             url: The website URL
             business_intel: Business intelligence data
             design_analysis: Design analysis data
-            prompt_file: Optional agent name for loading .md prompts (e.g., 'social-media-content-creator')
+            prompt_file: Optional agent name for loading .md prompts (e.g., 'social_content_creator')
             **kwargs: Additional parameters
 
         Returns:
@@ -143,7 +144,7 @@ class SocialContentCreator(BaseAgent):
             # Save content
             domain = self.sanitize_domain(url)
             filename = self.get_output_filename(domain)
-            self.save_json(social_content, filename, "social-content")
+            self.save_json(social_content, filename, "social_content")
 
             self.logger.info(f"Social content creation completed for {url}")
             return social_content

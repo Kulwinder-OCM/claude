@@ -16,7 +16,7 @@ class ScreenshotAnalyzer(BaseAgent):
     """
 
     def __init__(self):
-        super().__init__("screenshot-analyzer", "metrics")
+        super().__init__("screenshot_analyzer", "metrics")
 
         # Load environment variables from .env file if not already loaded
         try:
@@ -164,69 +164,15 @@ class ScreenshotAnalyzer(BaseAgent):
 
             if dynamic_prompt:
                 # Use dynamic prompt from markdown file
-                analysis_prompt = f"{dynamic_prompt}\n\nAnalyze this website screenshot for {url}."
+                analysis_prompt = f"""{dynamic_prompt}
+
+
+
+Analyze this website screenshot for {url} and return the JSON:"""
             else:
-                # Fallback to original hardcoded prompt
-                analysis_prompt = f"""
-You are a professional brand designer analyzing this website screenshot for {url}.
+                # Fallback disabled - force md file usage
+                raise ValueError(f"Failed to load prompt from {agent_name}.md file. Fallback disabled - md file is required.")
 
-CRITICAL REQUIREMENTS:
-- Return ONLY a valid JSON object. Start with {{ and end with }}. No other text.
-- Do not include markdown code blocks, explanations, or any text before/after the JSON.
-- EXAMINE EVERY SINGLE COLOR visible in the screenshot - backgrounds, text, buttons, borders, icons, gradients.
-- Extract ACTUAL hex colors you see, not placeholders.
-- Identify ALL visible fonts and typography.
-- Never use placeholder text like "#ACTUAL_HEX" or "FontName".
-- Give exact hex codes for every color (e.g. #FF5722, #1976D2, #FFFFFF).
-
-RESPONSE FORMAT: Your entire response must be a single valid JSON object.
-
-MANDATORY COLOR ANALYSIS:
-Look at EVERY visible element and extract:
-1. All background colors (page, sections, cards, etc.)
-2. All text colors (headings, body, links, labels)
-3. All interactive element colors (buttons, links, forms)
-4. All accent colors (borders, icons, highlights)
-5. All brand colors (logos, primary elements)
-
-JSON schema you MUST follow exactly:
-
-{{
-  "style_snapshot": {{
-    "vibe_keywords": ["word1", "word2", "word3"],
-    "art_direction": "One short sentence describing the visual style"
-  }},
-  "color_kit": {{
-    "background": {{"hex": "#HEXCODE", "where_seen": "main background"}},
-    "brand_primary": {{"hex": "#HEXCODE", "where_seen": "logo/primary buttons"}},
-    "text_primary": {{"hex": "#HEXCODE", "where_seen": "main headings"}},
-    "text_secondary": {{"hex": "#HEXCODE", "where_seen": "body text"}},
-    "accent_colors": [
-      {{"hex": "#HEXCODE", "where_seen": "specific UI element", "role": "accent/highlight/border"}},
-      {{"hex": "#HEXCODE", "where_seen": "specific UI element", "role": "accent/highlight/border"}}
-    ],
-    "additional_colors": [
-      {{"hex": "#HEXCODE", "where_seen": "specific element", "usage": "description"}}
-    ]
-  }},
-  "typography_kit": {{
-    "classification": "serif/sans-serif/monospace",
-    "likely_families": [
-      {{"name": "FontName", "confidence": 0.8}}
-    ],
-    "weights_used": {{"h1": 700, "h2": 600, "body": 400}},
-    "sizes_observed": {{"h1": "32px", "h2": "24px", "body": "16px"}}
-  }},
-  "composition": {{
-    "alignment": "left/center/right",
-    "shape_cues": ["rounded corners", "shadows", "borders"],
-    "spacing_patterns": "description of spacing and layout"
-  }},
-  "visual_feel_description": "detailed sensory description of the design"
-}}
-
-IMPORTANT: Analyze the ACTUAL screenshot content. Extract REAL colors you observe, not generic examples.
-"""
 
 
             # Analyze with AI provider
@@ -390,7 +336,7 @@ IMPORTANT: Analyze the ACTUAL screenshot content. Extract REAL colors you observ
 
         Args:
             url: The website URL to analyze
-            prompt_file: Optional agent name for loading .md prompts (e.g., 'screenshot-analyzer')
+            prompt_file: Optional agent name for loading .md prompts (e.g., 'screenshot_analyzer')
             **kwargs: Additional parameters
 
         Returns:

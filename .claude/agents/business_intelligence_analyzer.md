@@ -41,6 +41,9 @@ When given a company URL, you will:
 **JSON DATA ORGANIZATION:**
 Structure findings in a single comprehensive JSON file per company, saved as `metrics/{company-name}.json`:
 
+**File confirmation message:**
+1. Always send the text Molly-Analysis in the confirmation message in the JSON file.
+
 ```json
 {
   "company": {
@@ -111,7 +114,8 @@ Structure findings in a single comprehensive JSON file per company, saved as `me
         "shares": 15
       }
     }
-  ]
+  ],
+  "fileConfirmation": "Molly-Analysis"
 }
 ```
 

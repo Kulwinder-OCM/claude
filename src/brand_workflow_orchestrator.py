@@ -15,7 +15,7 @@ class BrandWorkflowOrchestrator(BaseAgent):
     """Orchestrates the complete brand analysis and content creation workflow."""
     
     def __init__(self):
-        super().__init__("brand-workflow-orchestrator", "metrics")
+        super().__init__("brand_workflow_orchestrator", "metrics")
 
         # Load workflow instructions from markdown file
         self.workflow_instructions = self.load_prompt_from_md("brand_workflow_orchestrator")
@@ -69,9 +69,9 @@ class BrandWorkflowOrchestrator(BaseAgent):
 
         Args:
             url: Website URL to analyze
-            prompt_file: Optional agent name for loading workflow instructions (defaults to 'brand-workflow-orchestrator')
+            prompt_file: Optional agent name for loading workflow instructions (defaults to 'brand_workflow_orchestrator')
             custom_prompts: Optional dictionary of custom prompt files for individual agents
-                          e.g., {"business": "custom-business-analyzer", "screenshot": "custom-screenshot-analyzer"}
+                          e.g., {"business": "custom-business-analyzer", "screenshot": "custom_screenshot_analyzer"}
 
         Returns:
             Complete workflow results with phase-by-phase status
@@ -96,7 +96,7 @@ class BrandWorkflowOrchestrator(BaseAgent):
 
             # Phase 1: Business Intelligence Analysis
             self.logger.info("Phase 1: Running business intelligence analysis")
-            business_prompt = custom_prompts.get("business", "business-intelligence-analyzer")
+            business_prompt = custom_prompts.get("business", "business_intelligence_analyzer")
             business_intel = self.business_analyzer.process(url, prompt_file=business_prompt)
             workflow_results["phases"]["business_intelligence"] = {
                 "status": "completed" if "error" not in business_intel else "failed",
@@ -106,7 +106,7 @@ class BrandWorkflowOrchestrator(BaseAgent):
 
             # Phase 2: Screenshot & Design Analysis
             self.logger.info("Phase 2: Running design analysis")
-            screenshot_prompt = custom_prompts.get("screenshot", "screenshot-analyzer")
+            screenshot_prompt = custom_prompts.get("screenshot", "screenshot_analyzer")
             design_analysis = self.screenshot_analyzer.process(url, prompt_file=screenshot_prompt)
             workflow_results["phases"]["design_analysis"] = {
                 "status": "completed" if "error" not in design_analysis else "failed",
@@ -116,7 +116,7 @@ class BrandWorkflowOrchestrator(BaseAgent):
 
             # Phase 3: Social Content Creation
             self.logger.info("Phase 3: Creating social media content")
-            social_prompt = custom_prompts.get("social", "social-media-content-creator")
+            social_prompt = custom_prompts.get("social", "social_content_creator")
             social_content = self.content_creator.process(
                 url,
                 business_intel=business_intel,
@@ -131,7 +131,7 @@ class BrandWorkflowOrchestrator(BaseAgent):
 
             # Phase 4: Instagram Prompt Generation
             self.logger.info("Phase 4: Generating Instagram prompts")
-            instagram_prompt = custom_prompts.get("instagram", "instagram-prompt-generator")
+            instagram_prompt = custom_prompts.get("instagram", "instagram_prompt_generator")
             instagram_prompts = self.prompt_generator.process(
                 url,
                 social_content=social_content,

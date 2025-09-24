@@ -85,7 +85,7 @@ class BaseAgent(ABC):
         Load AI instructions/prompt from a markdown file.
 
         Args:
-            agent_name: Name of the agent (e.g., 'business-intelligence-analyzer')
+            agent_name: Name of the agent (e.g., 'business_intelligence_analyzer')
             prompts_dir: Directory containing the prompt markdown files
 
         Returns:

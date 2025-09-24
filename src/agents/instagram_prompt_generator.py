@@ -2,12 +2,15 @@
 
 from typing import Dict, Any, List
 from .base_agent import BaseAgent
+from ai_providers.ai_factory import AIProviderFactory
+from ai_providers.base_provider import AICapability
 
 class InstagramPromptGenerator(BaseAgent):
     """Generates detailed Gemini prompts for Instagram image creation."""
     
     def __init__(self):
-        super().__init__("instagram-prompt-generator", "metrics")
+        super().__init__("instagram_prompt_generator", "metrics")
+        self.ai_provider = AIProviderFactory.get_configured_provider(AICapability.CONTENT_STRATEGY)
     
     def create_gemini_prompt(self, post: Dict[str, Any], design_guidelines: Dict[str, Any], company_name: str, url: str = "", prompt_file: str = None) -> str:
         """
@@ -26,9 +29,18 @@ class InstagramPromptGenerator(BaseAgent):
         agent_name = prompt_file or self.name
         dynamic_prompt = self.load_prompt_from_md(agent_name)
 
-        # Always use the hardcoded template which properly extracts and uses brand colors
-        # The markdown file is for AI instructions, not Python string templates
-        if True:  # Skip dynamic prompt templating to avoid KeyError with JSON braces
+        if dynamic_prompt:
+            # Try to create a prompt based on the .md file template approach
+            try:
+                return self._create_dynamic_prompt(post, design_guidelines, company_name, dynamic_prompt)
+            except Exception as e:
+                self.logger.warning(f"Dynamic prompt creation failed: {e}, falling back to hardcoded template")
+        else:
+            # Fallback disabled - force md file usage
+            raise ValueError(f"Failed to load prompt from {agent_name}.md file. Fallback disabled - md file is required.")
+
+        # This should not be reached if .md file is properly loaded
+        if True:  # Always use the hardcoded template which properly extracts and uses brand colors
             # Fallback to original hardcoded template
             # Extract comprehensive design colors from screenshot analysis
             color_kit = design_guidelines.get("colors", {})  # Updated path for nested structure
@@ -127,19 +139,112 @@ TECHNICAL REQUIREMENTS:
 IMPORTANT: This design MUST use the actual extracted brand colors and fonts from the website analysis. Create an image that looks like it belongs to this specific brand's visual identity system."""
 
             return prompt
-    
+
+    def _create_dynamic_prompt(self, post: Dict[str, Any], design_guidelines: Dict[str, Any], company_name: str, dynamic_prompt: str) -> str:
+        """Create a prompt using the dynamic template from .md file."""
+        # Extract data from design guidelines for template substitution
+        color_kit = design_guidelines.get("colors", {})
+        background_color = color_kit.get("background", {}).get("hex", "#FFFFFF")
+        brand_primary = color_kit.get("brand_primary", {}).get("hex", "#007AFF")
+        text_primary = color_kit.get("text_primary", {}).get("hex", "#1D1D1F")
+        text_secondary = color_kit.get("text_secondary", {}).get("hex", "#666666")
+
+        # Extract typography info
+        typography = design_guidelines.get("typography", {})
+        font_families = typography.get("likely_families", [])
+        primary_font = font_families[0].get("name", "Inter") if font_families else "Inter"
+
+        # Create a clean image generation prompt based on .md template concept but without dumping the entire file
+        prompt = f"""Create a professional Instagram post image (1080x1080 pixels) based on brand analysis:
+
+LAYOUT & COMPOSITION:
+- Canvas: Perfect 1080x1080 square format
+- Background: Use exact color {background_color}
+- Padding: 60px margin on all sides for safe viewing area
+- Style: Match the brand's actual visual aesthetic
+
+TYPOGRAPHY (based on website analysis):
+- Main headline: "{post.get('headline', 'Professional Services')}"
+- Font style: {primary_font}
+- Headline size: 48-56px, bold weight
+- Headline color: {text_primary}
+- Supporting text: "{post.get('subtext', '')}"
+- Supporting text color: {text_secondary}
+- Supporting text size: 18-20px, regular weight
+- Line spacing: 1.4x for optimal readability
+
+BRAND COLOR PALETTE (extracted from actual website):
+- Primary Background: {background_color}
+- Brand Primary: {brand_primary} (CRITICAL: use this exact color for buttons, CTAs, and key brand elements)
+- Text Primary: {text_primary} (main headings, important text)
+- Text Secondary: {text_secondary} (body text, descriptions)
+
+CRITICAL BRAND REQUIREMENTS:
+- Call-to-action button: "{post.get('call_to_action', 'Learn More')}"
+  MUST use exact brand color {brand_primary} as button background
+- Button text should be white or high-contrast color for readability
+- All colors MUST match the actual brand colors extracted from website
+- Do NOT include any company name or brand name text in the image
+
+VISUAL ELEMENTS:
+- Clean professional design matching brand aesthetic
+- Use accent color for subtle design elements
+- Maintain brand consistency with the actual website design
+- Professional, modern layout that reflects the brand's visual identity
+
+CONTENT MOOD & POSITIONING:
+- Target emotion: {post.get('target_emotion', 'Professional')}
+- Content type: {post.get('content_type', 'Brand')}
+- Overall feel: Mirror the brand's actual website personality
+
+TECHNICAL REQUIREMENTS:
+- High resolution, crisp text rendering
+- Mobile-optimized for Instagram feed viewing
+- Ensure perfect text readability at small sizes
+- No text cutoff at edges
+- Colors must be web-accurate and consistent
+- Professional, brand-aligned finish
+
+IMPORTANT: This design MUST use the actual extracted brand colors and fonts from the website analysis. Create an image that looks like it belongs to this specific brand's visual identity system."""
+
+        return prompt
+
     def generate_prompts(self, social_content: Dict[str, Any], url: str = "", prompt_file: str = None) -> Dict[str, Any]:
         """
-        Generate Gemini prompts for all Instagram posts using dynamic templates.
+        Generate Gemini prompts using AI analysis with dynamic prompts from .md files.
 
         Args:
             social_content: Social content strategy data
+            url: Website URL
             prompt_file: Optional agent name for loading .md prompts (defaults to this agent's name)
 
         Returns:
             Generated prompts data
         """
+        try:
+            # Use the prompt_file parameter or default to this agent's name
+            agent_name = prompt_file or self.name
 
+            # Use AI provider for intelligent prompt generation with dynamic prompts
+            prompts_data = self.ai_provider.generate_instagram_prompts(social_content, url, agent_name=agent_name)
+
+            # Add metadata
+            prompts_data.update({
+                "timestamp": self.get_timestamp(),
+                "creation_method": "ai_enhanced",
+                "ai_model": self.ai_provider.model,
+                "ai_provider": self.ai_provider.name,
+                "prompt_source": f"{agent_name}.md" if prompt_file else "default"
+            })
+
+            return prompts_data
+
+        except Exception as e:
+            self.logger.warning(f"AI prompt generation failed, falling back to template: {e}")
+            return self._template_based_prompts(social_content, url, prompt_file)
+
+    def _template_based_prompts(self, social_content: Dict[str, Any], url: str = "", prompt_file: str = None) -> Dict[str, Any]:
+        """Fallback template-based prompt generation."""
         company_name = social_content.get("company_name", "Company")
         design_guidelines = social_content.get("design_guidelines", {})
         posts = social_content.get("instagram_posts", [])
@@ -151,7 +256,8 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
             "timestamp": self.get_timestamp(),
             "total_prompts": len(posts),
             "design_guidelines_applied": design_guidelines,
-            "prompt_source": f"{agent_name}.md" if prompt_file else "default",
+            "prompt_source": f"{agent_name}.md" if prompt_file else "fallback",
+            "creation_method": "template_fallback",
             "prompts": []
         }
 
@@ -159,7 +265,7 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
             gemini_prompt = self.create_gemini_prompt(post, design_guidelines, company_name, url, prompt_file)
 
             prompt_data = {
-                "post_number": post.get("post_number", index),  # Use sequential index if no post_number provided
+                "post_number": post.get("post_number", index),
                 "concept": post.get("concept", "Brand"),
                 "headline": post.get("headline", ""),
                 "gemini_prompt": gemini_prompt,
@@ -167,8 +273,8 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
                 "content_type": post.get("content_type", "Brand"),
                 "visual_specifications": {
                     "format": "1080x1080 Instagram square",
-                    "colors": design_guidelines.get("color_kit", {}),
-                    "typography": design_guidelines.get("typography_kit", {}),
+                    "colors": design_guidelines.get("colors", {}),
+                    "typography": design_guidelines.get("typography", {}),
                     "layout": design_guidelines.get("layout_style", {})
                 }
             }
@@ -184,7 +290,7 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
         Args:
             url: The website URL
             social_content: Social content strategy data
-            prompt_file: Optional agent name for loading .md prompts (e.g., 'instagram-prompt-generator')
+            prompt_file: Optional agent name for loading .md prompts (e.g., 'instagram_prompt_generator')
             **kwargs: Additional parameters
 
         Returns:
@@ -200,7 +306,7 @@ IMPORTANT: This design MUST use the actual extracted brand colors and fonts from
             # Save prompts
             domain = self.sanitize_domain(url)
             filename = self.get_output_filename(domain)
-            self.save_json(prompts_data, filename, "instagram-prompts")
+            self.save_json(prompts_data, filename, "instagram_prompts")
 
             self.logger.info(f"Instagram prompts generated for {url}")
             return prompts_data

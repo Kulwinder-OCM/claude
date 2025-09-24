@@ -40,7 +40,7 @@ class BrandImageGenerator(BaseAgent):
         """Generate all Instagram images from prompts."""
 
         company_name = prompts_data.get("company_name", "Company")
-        prompts = prompts_data.get("prompts", [])
+        prompts = prompts_data.get("prompts", []) or prompts_data.get("instagram_prompts", [])
 
         generation_results = {
             "company_name": company_name,
