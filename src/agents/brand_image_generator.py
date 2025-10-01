@@ -59,14 +59,14 @@ class BrandImageGenerator(BaseAgent):
             font = None
             for font_path in font_paths:
                 try:
-                    font = ImageFont.truetype(font_path, 72)
+                    font = ImageFont.truetype(font_path, 48)
                     break
                 except:
                     continue
 
             if not font:
                 # Try system default fonts
-                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 72)
+                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 48)
         except:
             # Fallback to PIL default
             font = ImageFont.load_default()
