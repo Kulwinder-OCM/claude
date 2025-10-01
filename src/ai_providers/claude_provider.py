@@ -145,10 +145,10 @@ class ClaudeProvider(BaseAIProvider):
 
         prompt = f"""Analyze the website content for: {url}
 
-HTML Content:
-{html_content[:8000]}
+Website Content:
+{html_content[:20000]}
 
-Return only the JSON analysis object, no other text."""
+IMPORTANT: Analyze this ACTUAL website content thoroughly. Extract REAL information from the content provided above. Do not make assumptions or use placeholder data. Return only the JSON analysis object with accurate data extracted from the website content, no other text."""
 
         # Enhanced retry logic with exponential backoff and jitter
         import time
@@ -159,6 +159,8 @@ Return only the JSON analysis object, no other text."""
 
         for attempt in range(max_retries):
             try:
+                # Set higher max_tokens for detailed business analysis
+                kwargs.setdefault("max_tokens", 6000)
                 response = self._make_request(prompt, system_prompt, **kwargs)
                 break  # Success, exit retry loop
             except Exception as e:

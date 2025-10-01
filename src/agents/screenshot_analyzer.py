@@ -1,360 +1,349 @@
-"""Screenshot analyzer agent - captures and analyzes website screenshots with advanced AI vision."""
+"""Screenshot analyzer agent - captures and analyzes website screenshots."""
 
 import os
-import subprocess
-import tempfile
-from typing import Dict, Any, List
+import json
+from typing import Dict, Any
 from PIL import Image
-import io
 from .base_agent import BaseAgent
+from ai_providers.ai_factory import AIProviderFactory
+from ai_providers.base_provider import AICapability
 
 class ScreenshotAnalyzer(BaseAgent):
-    """Professional Website Screenshot and Design Style Analysis Specialist.
-
-    Captures screenshots using ScreenshotOne API and provides detailed analysis
-    of design styles, visual aesthetics, and design trends with AI vision.
-    """
+    """Captures website screenshots and analyzes design style."""
 
     def __init__(self):
         super().__init__("screenshot_analyzer", "metrics")
+        self.screenshot_endpoint = os.getenv("SCREENSHOT_ENDPOINT")
+        self.screenshot_api_key = os.getenv("SCREENSHOT_API_KEY")
+        self.ai_provider = AIProviderFactory.get_configured_provider(AICapability.WEB_ANALYSIS)
 
-        # Load environment variables from .env file if not already loaded
+    def extract_css_data(self, url: str) -> Dict[str, Any]:
+        """Extract actual CSS colors and fonts from the webpage with frequency-based prioritization."""
+        import requests
+        from bs4 import BeautifulSoup
+        import re
+        from collections import Counter
+
         try:
-            # Check if key environment variables are already loaded
-            if not os.getenv("CLAUDE_API_KEY") or not os.getenv("SCREENSHOT_API_KEY"):
-                from dotenv import load_dotenv
-                load_dotenv()
-                self.logger.info("Environment variables loaded from .env file")
-            else:
-                self.logger.info("Environment variables already available")
-        except ImportError:
-            self.logger.warning("python-dotenv not available, checking if env vars are set manually")
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            }
+            response = requests.get(url, headers=headers, timeout=30)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            color_frequency = Counter()
+            fonts = set()
+
+            # Helper to convert RGB to Hex
+            def rgb_to_hex(rgb_str):
+                try:
+                    numbers = re.findall(r'\d+', rgb_str)
+                    if len(numbers) >= 3:
+                        r, g, b = int(numbers[0]), int(numbers[1]), int(numbers[2])
+                        return f'#{r:02X}{g:02X}{b:02X}'
+                except:
+                    pass
+                return None
+
+            # Helper to normalize hex colors
+            def normalize_hex(color):
+                color = color.upper()
+                if len(color) == 4:  # #RGB to #RRGGBB
+                    color = '#' + ''.join([c*2 for c in color[1:]])
+                return color
+
+            # Extract from style tags with priority weighting
+            for style_tag in soup.find_all('style'):
+                style_content = style_tag.string if style_tag.string else ''
+
+                # CSS variables (highest priority - these are intentional brand colors)
+                css_vars = re.findall(r'--[\w-]*(?:color|primary|brand|accent|theme)[\w-]*:\s*(#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}\b|rgb\([^)]+\))', style_content, re.IGNORECASE)
+                for color in css_vars:
+                    if color.startswith('#'):
+                        color_frequency[normalize_hex(color)] += 10
+                    elif color.startswith('rgb'):
+                        hex_color = rgb_to_hex(color)
+                        if hex_color:
+                            color_frequency[hex_color] += 10
+
+                # Brand-relevant selectors (high priority)
+                brand_patterns = [
+                    r'(?:button|\.btn|\.button)[^{]*\{[^}]*(?:background-color|background|color|border-color):\s*(#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}\b|rgb\([^)]+\))',
+                    r'(?:header|\.header|nav|\.nav)[^{]*\{[^}]*(?:background-color|background|color|border-color):\s*(#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}\b|rgb\([^)]+\))',
+                    r'(?:\.primary|\.brand|\.accent|\.highlight)[^{]*\{[^}]*(?:background-color|background|color|border-color):\s*(#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}\b|rgb\([^)]+\))',
+                    r'(?:a:hover|a:active|\.link:hover)[^{]*\{[^}]*(?:color|background|border-color):\s*(#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}\b|rgb\([^)]+\))',
+                    r'(?:\.cta|\.call-to-action|\.action)[^{]*\{[^}]*(?:background-color|background|color|border-color):\s*(#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}\b|rgb\([^)]+\))'
+                ]
+
+                for pattern in brand_patterns:
+                    matches = re.findall(pattern, style_content, re.IGNORECASE)
+                    for color in matches:
+                        if color.startswith('#'):
+                            normalized = normalize_hex(color)
+                            if normalized not in ['#FFFFFF', '#000000', '#FFF', '#000']:
+                                color_frequency[normalized] += 5
+                        elif color.startswith('rgb'):
+                            hex_color = rgb_to_hex(color)
+                            if hex_color and hex_color not in ['#FFFFFF', '#000000']:
+                                color_frequency[hex_color] += 5
+
+                # Extract ALL color declarations to catch accent colors (lower priority)
+                all_color_declarations = re.findall(r'(?:color|background-color|border-color):\s*(#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}\b)', style_content)
+                for color in all_color_declarations:
+                    normalized = normalize_hex(color)
+                    if normalized not in ['#FFFFFF', '#000000', '#FFF', '#000']:
+                        color_frequency[normalized] += 1  # Lower weight for general colors
+
+                # Extract fonts
+                font_families = re.findall(r'font-family:\s*([^;}]+)', style_content)
+                for font_list in font_families:
+                    for font in font_list.split(','):
+                        clean_font = font.strip().replace('"', '').replace("'", '')
+                        if clean_font and clean_font not in ['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'inherit']:
+                            fonts.add(clean_font)
+
+            # Extract from brand-relevant elements (medium priority)
+            brand_elements = soup.select('header, nav, button, .btn, .button, .logo, [class*="brand"], [class*="primary"]')
+            for element in brand_elements[:50]:  # Limit to first 50
+                if element.get('style'):
+                    colors = re.findall(r'#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}\b|rgb\([^)]+\)', element['style'])
+                    for color in colors:
+                        if color.startswith('#'):
+                            normalized = normalize_hex(color)
+                            if normalized not in ['#FFFFFF', '#000000']:
+                                color_frequency[normalized] += 3
+                        elif color.startswith('rgb'):
+                            hex_color = rgb_to_hex(color)
+                            if hex_color and hex_color not in ['#FFFFFF', '#000000']:
+                                color_frequency[hex_color] += 3
+
+            # Get most frequent colors (likely brand colors)
+            most_common = color_frequency.most_common(15)
+
+            # Include colors used 2+ times (lowered threshold to catch accent colors like #f60)
+            extracted_colors = [color for color, count in most_common if count >= 2]
+
+            # Ensure we have at least 8 colors for a good palette
+            if len(extracted_colors) < 8 and len(most_common) > len(extracted_colors):
+                extracted_colors = [color for color, count in most_common[:12]]
+
+            self.logger.info(f"Found {len(color_frequency)} unique colors, selected {len(extracted_colors)} brand colors")
+            self.logger.info(f"Top colors with frequency: {dict(most_common[:8])}")
+
+            return {
+                "extracted_colors": extracted_colors,
+                "extracted_fonts": sorted(list(fonts))[:10],
+                "color_frequencies": dict(most_common)
+            }
+
         except Exception as e:
-            self.logger.warning(f"Could not load .env file: {e}")
+            self.logger.warning(f"Could not extract CSS data: {e}")
+            return {
+                "extracted_colors": [],
+                "extracted_fonts": [],
+                "color_frequencies": {}
+            }
 
-        self.screenshot_endpoint = self._get_env_var("SCREENSHOT_ENDPOINT")
-        self.screenshot_api_key = self._get_env_var("SCREENSHOT_API_KEY")
+    def capture_screenshot(self, url: str) -> str:
+        """Capture screenshot using ScreenshotOne API and save to temp file."""
+        import requests
 
-        # Initialize AI providers for image analysis
-        self._setup_ai_providers()
+        temp_file = "/tmp/screenshot.png"
 
-    def _get_env_var(self, key: str) -> str:
-        """Get environment variable with error handling."""
-        value = os.getenv(key)
-        if not value:
-            self.logger.warning(f"Environment variable {key} not set - using fallback analysis")
-            return ""
-        return value
+        if not self.screenshot_endpoint or not self.screenshot_api_key:
+            raise Exception("Screenshot API credentials not configured")
 
-    def _setup_ai_providers(self):
-        """Setup AI providers for image analysis."""
-        try:
-            # Import with correct relative path
-            import sys
-            import os
+        # Build screenshot request with proper parameters
+        params = {
+            'url': url,
+            'access_key': self.screenshot_api_key,
+            'format': 'png',
+            'viewport_width': 1920,
+            'viewport_height': 1080,
+            'device_scale_factor': 1,
+            'full_page': True,
+            'block_cookie_banners': True,
+            'block_ads': True
+        }
 
-            # Add the src directory to the path so we can import ai_providers
-            src_path = os.path.join(os.path.dirname(__file__), '..')
-            if src_path not in sys.path:
-                sys.path.append(src_path)
+        # Download screenshot using requests
+        self.logger.info(f"Capturing screenshot for {url}")
+        response = requests.get(self.screenshot_endpoint, params=params, timeout=60)
 
-            from ai_providers.claude_provider import ClaudeProvider
-            from ai_providers.gemini_provider import GeminiProvider
+        # Check for errors
+        if response.status_code != 200:
+            error_msg = f"Screenshot API error {response.status_code}: {response.text}"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
 
-            # Get the configured provider for web analysis
-            provider_name = os.getenv('AI_WEB_ANALYSIS_PROVIDER', 'claude').lower()
+        # Save screenshot
+        with open(temp_file, 'wb') as f:
+            f.write(response.content)
 
-            self.logger.info(f"Attempting to initialize AI provider: {provider_name}")
+        if not os.path.exists(temp_file) or os.path.getsize(temp_file) == 0:
+            raise Exception("Screenshot file was not created or is empty")
 
-            if provider_name == 'claude':
-                self.ai_provider = ClaudeProvider()
-            elif provider_name == 'gemini':
-                self.ai_provider = GeminiProvider()
-            else:
-                self.logger.warning(f"Unknown AI provider: {provider_name}, defaulting to Claude")
-                self.ai_provider = ClaudeProvider()
+        self.logger.info(f"Screenshot saved to {temp_file}, size: {os.path.getsize(temp_file)} bytes")
+        return temp_file
 
-            self.logger.info(f"Successfully initialized AI provider: {provider_name}")
+    def _compress_image_if_needed(self, image_path: str) -> str:
+        """Compress image if it's too large for Claude API (5 MB base64 limit)."""
+        import base64
 
-        except ImportError as e:
-            self.logger.error(f"Failed to import AI provider modules: {e}")
-            self.ai_provider = None
-        except Exception as e:
-            self.logger.error(f"Failed to initialize AI provider: {e}")
-            import traceback
-            self.logger.error(f"Full traceback: {traceback.format_exc()}")
-            self.ai_provider = None
+        # Check current size
+        file_size = os.path.getsize(image_path)
 
-    def capture_screenshot_with_bash(self, url: str) -> str:
-        """Capture screenshot using bash/curl command and save to temp file."""
-        try:
-            # Create temporary file for screenshot
-            temp_file = "/tmp/screenshot.png"
+        # Base64 encoding increases size by ~33%, so we need the file to be < 3.75 MB
+        # to stay under the 5 MB base64 limit
+        max_file_size = 3_500_000  # 3.5 MB to be safe
 
-            # Check if we have the required credentials
-            if not self.screenshot_endpoint or not self.screenshot_api_key:
-                raise Exception("Screenshot API credentials not available - check SCREENSHOT_ENDPOINT and SCREENSHOT_API_KEY environment variables")
+        if file_size <= max_file_size:
+            self.logger.info(f"Image size OK: {file_size} bytes")
+            return image_path
 
-            # Build the full URL for curl
-            screenshot_url = f"{self.screenshot_endpoint}?url={url}&access_key={self.screenshot_api_key}&format=png&viewport_width=375&viewport_height=812&device_scale_factor=2&full_page=true&block_cookie_banners=true&block_ads=true"
+        self.logger.info(f"Image too large ({file_size} bytes), compressing...")
 
-            # Build curl command
-            curl_cmd = [
-                "curl", "-o", temp_file, screenshot_url
-            ]
+        # Compress the image
+        with Image.open(image_path) as img:
+            # Convert RGBA to RGB if needed
+            if img.mode in ('RGBA', 'P', 'LA'):
+                # Create white background
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                if img.mode in ('RGBA', 'LA'):
+                    background.paste(img, mask=img.split()[-1])
+                    img = background
+                else:
+                    img = img.convert('RGB')
 
-            self.logger.info(f"Capturing screenshot for {url}")
-            self.logger.info(f"Screenshot API endpoint: {self.screenshot_endpoint}")
-            result = subprocess.run(curl_cmd, capture_output=True, text=True)
+            # Resize if needed (keep under 2000px on longest side for better compression)
+            width, height = img.size
+            max_dimension = 2000
+            if max(width, height) > max_dimension:
+                if width > height:
+                    new_width = max_dimension
+                    new_height = int(height * (max_dimension / width))
+                else:
+                    new_height = max_dimension
+                    new_width = int(width * (max_dimension / height))
 
-            if result.returncode != 0:
-                self.logger.error(f"Curl stderr: {result.stderr}")
-                self.logger.error(f"Curl stdout: {result.stdout}")
-                raise Exception(f"Screenshot capture failed: {result.stderr}")
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                self.logger.info(f"Resized image to {new_width}x{new_height}")
 
-            # Verify file was created and has content
-            if not os.path.exists(temp_file):
-                raise Exception("Screenshot file was not created")
+            # Save compressed version
+            compressed_path = "/tmp/screenshot_compressed.jpg"
+            img.save(compressed_path, 'JPEG', quality=85, optimize=True)
 
-            file_size = os.path.getsize(temp_file)
-            if file_size == 0:
-                raise Exception("Screenshot file is empty")
+            compressed_size = os.path.getsize(compressed_path)
+            self.logger.info(f"Compressed image size: {compressed_size} bytes")
 
-            self.logger.info(f"Screenshot saved to {temp_file}, size: {file_size} bytes")
-            return temp_file
+            return compressed_path
 
-        except Exception as e:
-            self.logger.error(f"Error capturing screenshot: {e}")
-            raise
-
-    def analyze_screenshot_with_ai(self, image_path: str, url: str, prompt_file: str = None) -> Dict[str, Any]:
+    def analyze_screenshot(self, image_path: str, url: str, prompt_file: str = None, css_data: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Analyze screenshot using AI vision with professional design analysis and dynamic prompts.
+        Analyze screenshot using AI vision.
 
         Args:
-            image_path: Path to the screenshot image file
-            url: The website URL
-            prompt_file: Optional agent name for loading .md prompts (defaults to this agent's name)
+            image_path: Path to screenshot image
+            url: Website URL
+            prompt_file: Optional agent name for loading .md prompts
+            css_data: Extracted CSS colors and fonts
 
         Returns:
-            Screenshot design analysis data
+            Design analysis data
         """
+        # Compress image if needed before analysis
+        compressed_path = self._compress_image_if_needed(image_path)
 
-        if not self.ai_provider:
-            self.logger.error("AI provider is None - using fallback analysis")
-            self.logger.error("Check AI provider initialization in _setup_ai_providers method")
-            return self._fallback_analysis(url)
+        # Load instructions from markdown file
+        agent_name = prompt_file or self.name
+        instructions = self.load_prompt_from_md(agent_name)
 
-        self.logger.info(f"AI provider available: {type(self.ai_provider).__name__}")
+        if not instructions:
+            raise ValueError(f"Failed to load instructions from {agent_name}.md")
 
-        # Verify the image file exists
-        if not os.path.exists(image_path):
-            self.logger.error(f"Screenshot file does not exist: {image_path}")
-            return self._fallback_analysis(url)
+        # Build prompt with instructions and CSS data
+        css_context = ""
+        if css_data and (css_data.get("extracted_colors") or css_data.get("extracted_fonts")):
+            css_context = f"""
 
-        # Check if ai_provider has the required method
-        if not hasattr(self.ai_provider, 'analyze_image_with_text'):
-            self.logger.error(f"AI provider {type(self.ai_provider).__name__} does not have analyze_image_with_text method")
-            return self._fallback_analysis(url)
+EXTRACTED CSS DATA FROM WEBPAGE:
+Colors found in CSS: {', '.join(css_data.get('extracted_colors', [])[:15])}
+Fonts found in CSS: {', '.join(css_data.get('extracted_fonts', [])[:8])}
 
-        try:
-            # Try to load analysis prompt from markdown file
-            agent_name = prompt_file or self.name
-            dynamic_prompt = self.load_prompt_from_md(agent_name)
+IMPORTANT: Use these ACTUAL extracted colors and fonts in your analysis. These are the real brand colors and fonts from the website's CSS."""
 
-            if dynamic_prompt:
-                # Use dynamic prompt from markdown file
-                analysis_prompt = f"""{dynamic_prompt}
+        analysis_prompt = f"""{instructions}
 
+Analyze this website screenshot for {url} and return the JSON.
+{css_context}"""
 
+        # Analyze with AI
+        self.logger.info(f"Analyzing screenshot with AI")
+        analysis_result = self.ai_provider.analyze_image_with_text(
+            image_path=compressed_path,
+            prompt=analysis_prompt
+        )
 
-Analyze this website screenshot for {url} and return the JSON:"""
+        # Parse JSON from AI response
+        if isinstance(analysis_result, str):
+            # Extract JSON from text response
+            json_start = analysis_result.find('{')
+            json_end = analysis_result.rfind('}') + 1
+            if json_start != -1 and json_end > json_start:
+                json_str = analysis_result[json_start:json_end]
+                parsed_analysis = json.loads(json_str)
             else:
-                # Fallback disabled - force md file usage
-                raise ValueError(f"Failed to load prompt from {agent_name}.md file. Fallback disabled - md file is required.")
+                raise ValueError("No valid JSON found in AI response")
+        else:
+            parsed_analysis = analysis_result
 
-
-
-            # Analyze with AI provider
-            self.logger.info(f"Starting AI image analysis for {url}")
-            analysis_result = self.ai_provider.analyze_image_with_text(
-                image_path=image_path,
-                prompt=analysis_prompt
-            )
-
-            self.logger.info(f"AI analysis completed, result type: {type(analysis_result)}")
-            self.logger.info(f"AI analysis result preview: {str(analysis_result)[:200]}...")
-
-            # Parse JSON response
-            import json
-            try:
-                if isinstance(analysis_result, str):
-                    # Extract JSON from response if wrapped in text
-                    # Try multiple JSON extraction methods
-
-                    # Method 1: Look for JSON object boundaries
-                    json_start = analysis_result.find('{')
-                    json_end = analysis_result.rfind('}') + 1
-
-                    if json_start != -1 and json_end > json_start:
-                        json_str = analysis_result[json_start:json_end]
-                        self.logger.info(f"Extracted JSON string: {json_str[:200]}...")
-                        try:
-                            parsed_analysis = json.loads(json_str)
-                            self.logger.info("Successfully parsed JSON from AI response")
-                        except json.JSONDecodeError as e:
-                            self.logger.warning(f"JSON parsing failed: {e}")
-                            # Try to find nested JSON blocks
-                            lines = analysis_result.split('\n')
-                            json_lines = []
-                            in_json = False
-                            brace_count = 0
-
-                            for line in lines:
-                                if '{' in line and not in_json:
-                                    in_json = True
-                                    json_lines.append(line)
-                                    brace_count += line.count('{') - line.count('}')
-                                elif in_json:
-                                    json_lines.append(line)
-                                    brace_count += line.count('{') - line.count('}')
-                                    if brace_count <= 0:
-                                        break
-
-                            if json_lines:
-                                json_str = '\n'.join(json_lines)
-                                parsed_analysis = json.loads(json_str)
-                                self.logger.info("Successfully parsed JSON using line-by-line extraction")
-                            else:
-                                raise ValueError("No valid JSON found in response")
-                    else:
-                        self.logger.warning("No JSON structure found in AI response")
-                        # Try to create a basic structure from the text response
-                        self.logger.info("Attempting to create fallback structure from text response")
-
-                        # Create a minimal fallback structure
-                        parsed_analysis = {
-                            "style_snapshot": {
-                                "vibe_keywords": ["analyzed", "extracted", "processed"],
-                                "art_direction": "Website analysis completed with text response"
-                            },
-                            "color_kit": {
-                                "background": {"hex": "#FFFFFF", "where_seen": "default background"},
-                                "brand_primary": {"hex": "#007AFF", "where_seen": "primary elements"},
-                                "text_primary": {"hex": "#1D1D1F", "where_seen": "main text"},
-                                "text_secondary": {"hex": "#86868B", "where_seen": "secondary text"}
-                            },
-                            "typography_kit": {
-                                "classification": "modern sans-serif",
-                                "likely_families": [{"name": "System UI", "confidence": 0.7}],
-                                "weights_used": {"h1": 700, "h2": 600, "body": 400}
-                            },
-                            "layout_style": {
-                                "approach": "responsive",
-                                "spacing": "standard",
-                                "alignment": "left"
-                            },
-                            "ai_response_text": analysis_result[:500] + "..." if len(analysis_result) > 500 else analysis_result,
-                            "extraction_method": "fallback_from_text"
-                        }
-                else:
-                    parsed_analysis = analysis_result
-                    self.logger.info("AI response is already structured data")
-
-                # Add metadata
-                parsed_analysis.update({
-                    "url": url,
-                    "timestamp": self.get_timestamp(),
-                    "analysis_method": "ai_vision_analysis",
-                    "ai_provider": os.getenv('AI_WEB_ANALYSIS_PROVIDER', 'claude'),
-                    "prompt_source": f"{agent_name}.md" if dynamic_prompt else "default",
-                    "screenshot_api_request": f"{self.screenshot_endpoint}?url={url}&access_key=***&format=png&viewport_width=375&viewport_height=812&device_scale_factor=2&full_page=true&block_cookie_banners=true&block_ads=true"
-                })
-
-                self.logger.info("AI analysis completed successfully with structured data")
-                return parsed_analysis
-
-            except json.JSONDecodeError as e:
-                self.logger.error(f"Failed to parse AI analysis JSON: {e}")
-                self.logger.error(f"Raw AI response: {analysis_result}")
-                return self._create_fallback_with_ai_text(url, analysis_result)
-
-        except Exception as e:
-            self.logger.error(f"AI analysis failed: {e}")
-            import traceback
-            self.logger.error(f"Full traceback: {traceback.format_exc()}")
-            return self._fallback_analysis(url)
-
-    def _create_fallback_with_ai_text(self, url: str, ai_text: str) -> Dict[str, Any]:
-        """Create fallback analysis when AI returns non-JSON response."""
-        return {
+        # Add metadata
+        parsed_analysis.update({
             "url": url,
             "timestamp": self.get_timestamp(),
-            "analysis_method": "ai_text_analysis",
-            "ai_provider": os.getenv('AI_WEB_ANALYSIS_PROVIDER', 'claude'),
-            "raw_analysis": ai_text,
-            "style_snapshot": {
-                "vibe_keywords": ["modern", "professional", "clean"],
-                "art_direction": "AI analysis provided in text format"
-            },
-            "note": "AI provided detailed text analysis rather than structured JSON"
-        }
+            "ai_provider": self.ai_provider.name,
+            "ai_model": self.ai_provider.model
+        })
 
-    def _fallback_analysis(self, url: str) -> Dict[str, Any]:
-        """Fallback analysis when AI is not available."""
-        return {
-            "url": url,
-            "timestamp": self.get_timestamp(),
-            "analysis_method": "basic_fallback",
-            "style_snapshot": {
-                "vibe_keywords": ["modern", "clean", "professional"],
-                "art_direction": "Basic analysis - AI provider not available"
-            },
-            "color_kit": {
-                "background": {"hex": "#FFFFFF", "where_seen": "assumed main background"},
-                "brand_primary": {"hex": "#007AFF", "where_seen": "estimated brand color"},
-                "text_primary": {"hex": "#1D1D1F", "where_seen": "standard dark text"},
-                "text_secondary": {"hex": "#86868B", "where_seen": "standard gray text"},
-                "recommended_pairings": ["Dark text on light background"]
-            },
-            "typography_kit": {
-                "classification": "sans-serif, modern",
-                "likely_families": [{"name": "System Font", "confidence": 0.5}],
-                "weights_used": {"h1": 700, "h2": 600, "body": 400},
-                "hierarchy": {
-                    "h1": {"size": "48px", "leading": "tight"},
-                    "h2": {"size": "36px", "leading": "normal"},
-                    "body": {"size": "16px", "leading": "normal"}
-                }
-            },
-            "note": "Fallback analysis used - screenshot API or AI analysis unavailable"
-        }
-    
+        return parsed_analysis
+
     def process(self, url: str, prompt_file: str = None, **kwargs) -> Dict[str, Any]:
         """
-        Process URL and return comprehensive screenshot analysis.
+        Process URL and return screenshot analysis.
 
         Args:
             url: The website URL to analyze
-            prompt_file: Optional agent name for loading .md prompts (e.g., 'screenshot_analyzer')
+            prompt_file: Optional agent name for loading .md prompts
             **kwargs: Additional parameters
 
         Returns:
-            Screenshot design analysis data
+            Screenshot design analysis data saved to JSON file
         """
-        # Log any additional parameters passed
-        if kwargs:
-            self.logger.info(f"Processing with additional parameters: {kwargs}")
-
         temp_file = None
         try:
-            # Capture screenshot using bash/curl method
-            temp_file = self.capture_screenshot_with_bash(url)
+            # Extract CSS data from webpage first
+            self.logger.info(f"Extracting CSS data from {url}")
+            css_data = self.extract_css_data(url)
 
-            # Analyze screenshot with AI vision using optional custom prompt
-            analysis = self.analyze_screenshot_with_ai(temp_file, url, prompt_file)
+            # Capture screenshot
+            temp_file = self.capture_screenshot(url)
 
-            # Add image dimensions if available
+            # Analyze screenshot with CSS data
+            analysis = self.analyze_screenshot(temp_file, url, prompt_file, css_data)
+
+            # Store CSS data in analysis for reference
+            if css_data["extracted_colors"]:
+                analysis["css_extracted_colors"] = css_data["extracted_colors"]
+                self.logger.info(f"Extracted {len(css_data['extracted_colors'])} colors from CSS")
+
+            if css_data["extracted_fonts"]:
+                analysis["css_extracted_fonts"] = css_data["extracted_fonts"]
+                self.logger.info(f"Extracted {len(css_data['extracted_fonts'])} fonts from CSS")
+
+            # Add image dimensions
             if temp_file and os.path.exists(temp_file):
                 try:
                     with Image.open(temp_file) as img:
@@ -365,32 +354,25 @@ Analyze this website screenshot for {url} and return the JSON:"""
                 except Exception as e:
                     self.logger.warning(f"Could not get image dimensions: {e}")
 
-            # Save analysis
+            # Save to metrics/screenshots/analyses/{domain-name}-design-analysis-{date}.json
             domain = self.sanitize_domain(url)
             filename = self.get_output_filename(domain)
             self.save_json(analysis, filename, "screenshots/analyses")
 
-            self.logger.info(f"Screenshot analysis completed for {url}")
-            self.logger.info(f"AI Provider initialized: {self.ai_provider}")
-
+            self.logger.info(f"Screenshot analysis saved to metrics/screenshots/analyses/{filename}")
             return analysis
 
         except Exception as e:
             self.logger.error(f"Error processing {url}: {e}")
-            return {
-                "error": str(e),
-                "url": url,
-                "timestamp": self.get_timestamp(),
-                "analysis_method": "error_fallback"
-            }
+            raise
         finally:
-            # Cleanup temporary screenshot file
+            # Cleanup temporary screenshot
             if temp_file and os.path.exists(temp_file):
                 try:
                     os.remove(temp_file)
-                    self.logger.info(f"Cleaned up temporary file: {temp_file}")
+                    self.logger.info(f"Cleaned up temporary file")
                 except Exception as e:
-                    self.logger.warning(f"Could not remove temp file {temp_file}: {e}")
+                    self.logger.warning(f"Could not remove temp file: {e}")
 
     def get_output_filename(self, domain: str) -> str:
         """Generate output filename for screenshot analysis."""

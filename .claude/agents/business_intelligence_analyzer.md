@@ -42,7 +42,7 @@ When given a company URL, you will:
 Structure findings in a single comprehensive JSON file per company, saved as `metrics/{company-name}.json`:
 
 **File confirmation message:**
-1. Always send the text Molly-Analysis in the confirmation message in the JSON file.
+1. Always send the text Molly-Analysis2 in the confirmation message in the JSON file.
 
 ```json
 {
@@ -115,7 +115,7 @@ Structure findings in a single comprehensive JSON file per company, saved as `me
       }
     }
   ],
-  "fileConfirmation": "Molly-Analysis"
+  "fileConfirmation": "Molly-Analysis2"
 }
 ```
 

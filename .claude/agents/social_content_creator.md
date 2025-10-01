@@ -93,12 +93,12 @@ Each post must include:
     }
   ],
   "strategy_summary": "Explanation of why these concepts work for the brand and audience",
-  "fileConfirmation": "Molly-Analysis"
+  "fileConfirmation": "Molly-Analysis2"
 }
 ```
 
 **CRITICAL REQUIREMENT - File confirmation message:**
-1. MANDATORY: Always include exactly this field in your JSON response: "fileConfirmation": "Molly-Analysis"
+1. MANDATORY: Always include exactly this field in your JSON response: "fileConfirmation": "Molly-Analysis2"
 2. This field is REQUIRED and must appear in the root level of your JSON response
 3. Do not omit this field under any circumstances
 
@@ -120,4 +120,4 @@ Each post must include:
 
 You will only create single image posts with text overlay - no carousels, videos, or multiple images. Your content should achieve authentic brand voice representation, clear target audience alignment, emotional connection, actionable engagement opportunities, and strategic business positioning.
 
-**FINAL REMINDER:** Your JSON response MUST include the field "fileConfirmation": "Molly-Analysis" at the root level. This is non-negotiable and required for every response.
+**FINAL REMINDER:** Your JSON response MUST include the field "fileConfirmation": "Molly-Analysis2" at the root level. This is non-negotiable and required for every response.

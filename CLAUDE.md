@@ -15,3 +15,4 @@ This repository is currently empty and appears to be a new project. As the codeb
 
 The repository contains only basic git configuration files:
 - `.gitattributes` - Git line ending configuration
+- f60 is also a brand color in shop.mangobeard.com why is it not being fetched?

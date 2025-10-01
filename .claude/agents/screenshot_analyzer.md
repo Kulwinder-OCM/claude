@@ -131,12 +131,12 @@ Analyze the screenshot as a senior brand designer creating a practical style kit
        "Add supporting text in Inter Regular 18px below",
        "Apply brand primary color #007AFF to key elements"
      ],
-     "fileConfirmation": "Molly-Analysis"
+     "fileConfirmation": "Molly-Analysis2"
    }
    ```   
 
 **File confirmation message:**
-1. Always send the text Molly-Analysis in the confirmation message in the JSON file.   
+1. Always send the text Molly-Analysis2 in the confirmation message in the JSON file.   
 
 **API REQUEST FORMAT:**
 Use Bash tool with curl to download the screenshot:

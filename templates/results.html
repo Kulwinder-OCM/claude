@@ -108,164 +108,132 @@
                 </p>
             </div>
             <div class="card-body">
-                {% if bi_data.get('company_overview') and bi_data.company_overview is mapping %}
                 <div class="row">
+                    <!-- Company Overview -->
+                    {% if bi_data.get('company') and bi_data.company is mapping %}
                     <div class="col-md-6 mb-4">
                         <h4><i class="fas fa-building me-2 text-info"></i>Company Overview</h4>
-                        {% if bi_data.company_overview.get('name') %}
-                        <p><strong>Company Name:</strong> {{ bi_data.company_overview.name }}</p>
+                        {% if bi_data.company.get('name') %}
+                        <p><strong>Company Name:</strong> {{ bi_data.company.name }}</p>
                         {% endif %}
-                        {% if bi_data.company_overview.get('industry') %}
-                        <p><strong>Industry:</strong> {{ bi_data.company_overview.industry }}</p>
+                        {% if bi_data.company.get('website') %}
+                        <p><strong>Website:</strong> <a href="{{ bi_data.company.website }}" target="_blank">{{ bi_data.company.website }}</a></p>
                         {% endif %}
-                        {% if bi_data.company_overview.get('description') %}
-                        <p><strong>Description:</strong></p>
-                        <p class="text-muted">{{ bi_data.company_overview.description }}</p>
+                        {% if bi_data.company.get('businessType') %}
+                        <p><strong>Business Type:</strong> {{ bi_data.company.businessType }}</p>
+                        {% endif %}
+                        {% if bi_data.company.get('valueProposition') %}
+                        <p><strong>Value Proposition:</strong></p>
+                        <p class="text-muted">{{ bi_data.company.valueProposition }}</p>
                         {% endif %}
                     </div>
+                    {% endif %}
+
+                    <!-- Products & Services -->
+                    {% if bi_data.get('products_services') and bi_data.products_services is mapping %}
                     <div class="col-md-6 mb-4">
-                        {% if bi_data.get('services_products') and bi_data.services_products is mapping %}
-                        <h4><i class="fas fa-cogs me-2 text-info"></i>Services & Products</h4>
-                        <p class="text-muted">{{ bi_data.services_products.get('main_offerings', 'Services and products identified through AI analysis') }}</p>
+                        <h4><i class="fas fa-box me-2 text-info"></i>Products & Services</h4>
+                        {% if bi_data.products_services.get('primaryOfferings') and bi_data.products_services.primaryOfferings is iterable %}
+                        <p><strong>Primary Offerings:</strong></p>
+                        <ul>
+                            {% for offering in bi_data.products_services.primaryOfferings[:5] %}
+                            <li>{{ offering }}</li>
+                            {% endfor %}
+                        </ul>
                         {% endif %}
-                        
-                        {% if bi_data.get('target_market') and bi_data.target_market is mapping %}
-                        <h5 class="mt-4"><i class="fas fa-users me-2 text-info"></i>Target Market</h5>
-                        <p class="text-muted">{{ bi_data.target_market.get('audience', 'Target audience identified through analysis') }}</p>
+                        {% if bi_data.products_services.get('uniqueFeatures') and bi_data.products_services.uniqueFeatures is iterable %}
+                        <p><strong>Unique Features:</strong></p>
+                        <ul>
+                            {% for feature in bi_data.products_services.uniqueFeatures[:3] %}
+                            <li class="text-muted">{{ feature }}</li>
+                            {% endfor %}
+                        </ul>
                         {% endif %}
                     </div>
-                </div>
-                {% else %}
-                <div class="alert alert-light">
-                    <h5><i class="fas fa-info-circle me-2"></i>Analysis Summary</h5>
-                    {% set raw_text = bi_data.get('raw_analysis', 'Business intelligence analysis completed successfully') %}
-
-                    {# Clean up text: remove JSON braces and format as readable content #}
-                    {% if '{' in raw_text and '}' in raw_text %}
-                        {# Extract the descriptive text before JSON and clean it up #}
-                        {% set intro_part = raw_text.split('{')[0].strip() %}
-
-                        {# Display the intro text cleanly #}
-                        {% if intro_part %}
-                            <div class="mb-3">
-                                <p>{{ intro_part }}</p>
-                            </div>
-                        {% endif %}
-
-                        {# Extract and clean JSON content to display as readable text #}
-                        {% set json_part = raw_text[raw_text.find('{'):raw_text.rfind('}')+1] %}
-                        {% if json_part %}
-                            <div class="p-3 bg-light rounded">
-                                {% set clean_content = json_part.replace('{', '').replace('}', '').replace('"', '').replace(',', '\n').replace(':', ': ') %}
-                                {% set lines = clean_content.split('\n') %}
-                                {% for line in lines %}
-                                    {% if line.strip() and not line.strip().startswith('main_offerings') and not line.strip().startswith('[') %}
-                                        {% set clean_line = line.strip() %}
-                                        {% if clean_line %}
-                                            <p class="mb-1">{{ clean_line }}</p>
-                                        {% endif %}
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    {% else %}
-                        {# Display clean text if no JSON detected #}
-                        <div class="p-3 bg-light rounded">
-                            <p class="mb-0">{{ raw_text }}</p>
-                        </div>
                     {% endif %}
                 </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
 
-        <!-- Social Content Strategy -->
-        {% if results.phases and results.phases.get('social_content') %}
-        {% set social_data = results.phases.social_content.data %}
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white">
-                <h3 class="mb-0">
-                    <i class="fas fa-bullhorn me-2"></i>Social Media Strategy
-                </h3>
-                <p class="mb-0 mt-2 opacity-75">
-                    <i class="fas fa-robot me-1"></i>Powered by {{ social_data.get('ai_provider', 'AI')|title }}
-                </p>
-            </div>
-            <div class="card-body">
-                {% if social_data.get('brand_voice') and social_data.brand_voice is mapping %}
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h4><i class="fas fa-microphone me-2 text-success"></i>Brand Voice</h4>
-                        <p><strong>Tone:</strong> {{ social_data.brand_voice.get('tone', 'Professional and engaging') }}</p>
-                        <p><strong>Personality:</strong> {{ social_data.brand_voice.get('personality', 'Authentic and trustworthy') }}</p>
-                        {% if social_data.brand_voice.get('messaging_style') %}
-                        <p><strong>Messaging Style:</strong> {{ social_data.brand_voice.get('messaging_style') }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        {% if social_data.get('target_audience') %}
-                        <h4><i class="fas fa-users me-2 text-success"></i>Target Audience</h4>
-                        {% set target_aud = social_data.target_audience %}
-                        {% if target_aud %}
-                            {% if target_aud is string %}
-                                <p>{{ target_aud }}</p>
-                            {% elif target_aud is sequence and target_aud is not string %}
-                                <p>{{ target_aud|join(', ') }}</p>
-                            {% else %}
-                                {# Try to handle as dict, fallback to string representation #}
-                                <p>{{ target_aud.primary|default(target_aud.demographics.primary|default('Business professionals and decision makers')) if target_aud is mapping else target_aud }}</p>
-                            {% endif %}
-                        {% endif %}
-                        {% endif %}
-
-                        {% if social_data.get('content_strategy') and social_data.content_strategy is mapping %}
-                        <h5 class="mt-4"><i class="fas fa-calendar me-2 text-success"></i>Content Strategy</h5>
-                        <p><strong>Posting Frequency:</strong> {{ social_data.content_strategy.get('posting_frequency', '3-4 times per week') }}</p>
-                        {% if social_data.content_strategy.get('best_times') %}
-                        <p><strong>Best Times:</strong> {{ social_data.content_strategy.get('best_times') }}</p>
-                        {% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-
-                {% if social_data.get('instagram_posts') and social_data.instagram_posts is iterable %}
-                <h4><i class="fas fa-instagram me-2 text-success"></i>Instagram Post Concepts</h4>
                 <div class="row">
-                    {% for post in social_data.instagram_posts[:3] %}
-                    {% if post is mapping %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card border-success">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ post.get('headline', 'Post Concept') }}</h6>
-                                {% set subtext = post.get('subtext', '') %}
-                                <p class="card-text small text-muted">{{ subtext[:100] }}{% if subtext|length > 100 %}...{% endif %}</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-success">
-                                        <i class="fas fa-heart me-1"></i>{{ post.get('target_emotion', 'Engaging') }}
-                                    </small>
-                                    <small class="text-muted">{{ post.get('content_type', 'Social post') }}</small>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Target Market -->
+                    {% if bi_data.get('target_market') and bi_data.target_market is mapping %}
+                    <div class="col-md-6 mb-4">
+                        <h4><i class="fas fa-users me-2 text-info"></i>Target Market</h4>
+                        {% if bi_data.target_market.get('primaryAudience') %}
+                        <p><strong>Primary Audience:</strong> {{ bi_data.target_market.primaryAudience }}</p>
+                        {% endif %}
+                        {% if bi_data.target_market.get('industries') and bi_data.target_market.industries is iterable %}
+                        <p><strong>Industries:</strong> {{ bi_data.target_market.industries|join(', ') }}</p>
+                        {% endif %}
+                        {% if bi_data.target_market.get('geographicFocus') %}
+                        <p><strong>Geographic Focus:</strong> {{ bi_data.target_market.geographicFocus }}</p>
+                        {% endif %}
                     </div>
                     {% endif %}
-                    {% endfor %}
+
+                    <!-- Competitive Analysis -->
+                    {% if bi_data.get('competitive_landscape') and bi_data.competitive_landscape is mapping %}
+                    <div class="col-md-6 mb-4">
+                        <h4><i class="fas fa-chart-line me-2 text-info"></i>Competitive Position</h4>
+                        {% if bi_data.competitive_landscape.get('positioning') %}
+                        <p><strong>Positioning:</strong></p>
+                        <p class="text-muted">{{ bi_data.competitive_landscape.positioning }}</p>
+                        {% endif %}
+                        {% if bi_data.competitive_landscape.get('differentiators') and bi_data.competitive_landscape.differentiators is iterable %}
+                        <p><strong>Key Differentiators:</strong></p>
+                        <ul>
+                            {% for diff in bi_data.competitive_landscape.differentiators[:3] %}
+                            <li class="text-muted">{{ diff }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
-                {% else %}
-                <div class="alert alert-light">
-                    <h5><i class="fas fa-check-circle me-2"></i>Strategy Generated</h5>
-                    <p class="mb-0">Comprehensive social media content strategy created with AI-powered insights for maximum engagement.</p>
+
+                <!-- Brand & Marketing -->
+                {% if bi_data.get('brand_marketing') and bi_data.brand_marketing is mapping %}
+                <div class="row">
+                    <div class="col-12 mb-4">
+                        <h4><i class="fas fa-bullhorn me-2 text-info"></i>Brand & Marketing</h4>
+                        <div class="row">
+                            {% if bi_data.brand_marketing.get('brandVoice') %}
+                            <div class="col-md-4">
+                                <p><strong>Brand Voice:</strong></p>
+                                <p class="text-muted">{{ bi_data.brand_marketing.brandVoice }}</p>
+                            </div>
+                            {% endif %}
+                            {% if bi_data.brand_marketing.get('messagingThemes') and bi_data.brand_marketing.messagingThemes is iterable %}
+                            <div class="col-md-4">
+                                <p><strong>Messaging Themes:</strong></p>
+                                <ul class="list-unstyled">
+                                    {% for theme in bi_data.brand_marketing.messagingThemes[:4] %}
+                                    <li class="text-muted"><i class="fas fa-check-circle text-info me-1"></i>{{ theme }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            {% if bi_data.brand_marketing.get('contentTypes') and bi_data.brand_marketing.contentTypes is iterable %}
+                            <div class="col-md-4">
+                                <p><strong>Content Types:</strong></p>
+                                <ul class="list-unstyled">
+                                    {% for content in bi_data.brand_marketing.contentTypes[:4] %}
+                                    <li class="text-muted"><i class="fas fa-file-alt text-info me-1"></i>{{ content }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
                 {% endif %}
             </div>
         </div>
         {% endif %}
 
-        <!-- Design Analysis & Instagram Prompts -->
+        <!-- Design Analysis -->
         <div class="row">
-            <!-- Design Analysis -->
+            <div class="col-12">
+                <!-- Design Analysis -->
             {% if results.phases and results.phases.get('design_analysis') %}
             {% set design_data = results.phases.design_analysis.data %}
             <div class="col-lg-6 mb-4">
@@ -282,86 +250,38 @@
                         {% if design_data.get('color_kit') and design_data.color_kit is mapping %}
                         <h5><i class="fas fa-paint-brush me-2 text-warning"></i>Brand Color Palette</h5>
                         <div class="row mb-4">
-                            <!-- Primary Brand Colors -->
+                            <!-- All Brand Colors -->
                             <div class="col-12 mb-3">
-                                <h6 class="fw-bold text-muted mb-3">Primary Brand Colors</h6>
-                                <div class="d-flex flex-wrap">
+                                <h6 class="fw-bold text-muted mb-3">Brand Colors</h6>
+                                <div class="d-flex flex-wrap gap-3">
                                     {% set color_kit = design_data.color_kit %}
 
-                                    <!-- Background Color -->
-                                    {% if color_kit.get('background') and color_kit.background is mapping %}
-                                    <div class="me-4 mb-3 text-center">
-                                        <div class="color-swatch position-relative" style="width: 70px; height: 70px; background-color: {{ color_kit.background.get('hex', '#FFFFFF') }}; border: 2px solid #ddd; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
-                                        <small class="d-block mt-2 fw-bold text-dark">{{ color_kit.background.get('hex', '#FFFFFF') }}</small>
-                                        <small class="d-block text-muted">Background</small>
-                                        <small class="d-block text-muted fst-italic">{{ color_kit.background.get('where_seen', '') }}</small>
-                                    </div>
-                                    {% endif %}
-
-                                    <!-- Brand Primary Color -->
-                                    {% if color_kit.get('brand_primary') and color_kit.brand_primary is mapping %}
-                                    <div class="me-4 mb-3 text-center">
-                                        <div class="color-swatch position-relative" style="width: 70px; height: 70px; background-color: {{ color_kit.brand_primary.get('hex', '#007AFF') }}; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
-                                        <small class="d-block mt-2 fw-bold text-dark">{{ color_kit.brand_primary.get('hex', '#007AFF') }}</small>
-                                        <small class="d-block text-muted">Brand Primary</small>
-                                        <small class="d-block text-muted fst-italic">{{ color_kit.brand_primary.get('where_seen', '') }}</small>
-                                    </div>
-                                    {% endif %}
-
-                                    <!-- Text Primary Color -->
-                                    {% if color_kit.get('text_primary') and color_kit.text_primary is mapping %}
-                                    <div class="me-4 mb-3 text-center">
-                                        <div class="color-swatch position-relative" style="width: 70px; height: 70px; background-color: {{ color_kit.text_primary.get('hex', '#1D1D1F') }}; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
-                                        <small class="d-block mt-2 fw-bold text-dark">{{ color_kit.text_primary.get('hex', '#1D1D1F') }}</small>
-                                        <small class="d-block text-muted">Text Primary</small>
-                                        <small class="d-block text-muted fst-italic">{{ color_kit.text_primary.get('where_seen', '') }}</small>
-                                    </div>
-                                    {% endif %}
-
-                                    <!-- Text Secondary Color -->
-                                    {% if color_kit.get('text_secondary') and color_kit.text_secondary is mapping %}
-                                    <div class="me-4 mb-3 text-center">
-                                        <div class="color-swatch position-relative" style="width: 70px; height: 70px; background-color: {{ color_kit.text_secondary.get('hex', '#86868B') }}; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
-                                        <small class="d-block mt-2 fw-bold text-dark">{{ color_kit.text_secondary.get('hex', '#86868B') }}</small>
-                                        <small class="d-block text-muted">Text Secondary</small>
-                                        <small class="d-block text-muted fst-italic">{{ color_kit.text_secondary.get('where_seen', '') }}</small>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- Accent Colors -->
-                            {% if color_kit.get('accent_colors') and color_kit.accent_colors is iterable and color_kit.accent_colors|length > 0 %}
-                            <div class="col-12 mb-3">
-                                <h6 class="fw-bold text-muted mb-3">Accent Colors</h6>
-                                <div class="d-flex flex-wrap">
-                                    {% for accent in color_kit.accent_colors[:4] %}
-                                    {% if accent is mapping %}
-                                    <div class="me-4 mb-3 text-center">
-                                        <div class="color-swatch position-relative" style="width: 60px; height: 60px; background-color: {{ accent.get('hex', '#E5E5E5') }}; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></div>
-                                        <small class="d-block mt-2 fw-bold text-dark">{{ accent.get('hex', '#E5E5E5') }}</small>
-                                        <small class="d-block text-muted">{{ accent.get('role', 'Accent') }}</small>
-                                        <small class="d-block text-muted fst-italic">{{ accent.get('where_seen', '') }}</small>
-                                    </div>
-                                    {% endif %}
+                                    <!-- Iterate through all color_kit entries -->
+                                    {% for color_name, color_data in color_kit.items() %}
+                                        {% if color_data is mapping and color_data.get('hex') and color_name not in ['recommended_pairings'] %}
+                                        <div class="color-card text-center" style="min-width: 90px;">
+                                            <div class="color-swatch mb-2" style="width: 70px; height: 70px; background-color: {{ color_data.hex }}; border: 2px solid #ddd; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 0 auto;"></div>
+                                            <small class="d-block fw-bold text-dark mb-1">{{ color_data.hex }}</small>
+                                            <small class="d-block text-muted text-capitalize" style="font-size: 0.75rem;">{{ color_name.replace('_', ' ') }}</small>
+                                            {% if color_data.get('where_seen') %}
+                                            <small class="d-block text-muted fst-italic" style="font-size: 0.7rem; max-width: 90px; word-wrap: break-word;">{{ color_data.where_seen }}</small>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
-                            {% endif %}
 
-                            <!-- Additional Colors -->
-                            {% if color_kit.get('additional_colors') and color_kit.additional_colors is iterable and color_kit.additional_colors|length > 0 %}
-                            <div class="col-12">
-                                <h6 class="fw-bold text-muted mb-3">Additional Colors</h6>
-                                <div class="d-flex flex-wrap">
-                                    {% for additional in color_kit.additional_colors[:4] %}
-                                    {% if additional is mapping %}
-                                    <div class="me-4 mb-3 text-center">
-                                        <div class="color-swatch position-relative" style="width: 50px; height: 50px; background-color: {{ additional.get('hex', '#F0F0F0') }}; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);"></div>
-                                        <small class="d-block mt-2 fw-bold text-dark">{{ additional.get('hex', '#F0F0F0') }}</small>
-                                        <small class="d-block text-muted fst-italic">{{ additional.get('usage', additional.get('where_seen', '')) }}</small>
+                            <!-- CSS Extracted Colors (if available) -->
+                            {% if design_data.get('css_extracted_colors') and design_data.css_extracted_colors is iterable and design_data.css_extracted_colors|length > 0 %}
+                            <div class="col-12 mb-3">
+                                <h6 class="fw-bold text-muted mb-3">CSS Extracted Colors <span class="badge bg-secondary ms-2">From Stylesheet</span></h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for color_hex in design_data.css_extracted_colors[:15] %}
+                                    <div class="color-card-small text-center" style="min-width: 70px;">
+                                        <div class="color-swatch-small mb-1" style="width: 50px; height: 50px; background-color: {{ color_hex }}; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin: 0 auto;"></div>
+                                        <small class="d-block fw-bold text-dark" style="font-size: 0.7rem;">{{ color_hex }}</small>
                                     </div>
-                                    {% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
@@ -475,46 +395,7 @@
                 </div>
             </div>
             {% endif %}
-
-            <!-- Instagram Prompts -->
-            {% if results.phases and results.phases.get('instagram_prompts') %}
-            {% set prompts_data = results.phases.instagram_prompts.data %}
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header bg-secondary text-white">
-                        <h4 class="mb-0">
-                            <i class="fas fa-lightbulb me-2"></i>AI Prompts
-                        </h4>
-                        <p class="mb-0 mt-2 opacity-75">
-                            {{ prompts_data.get('total_prompts', 3) }} prompts created for Gemini
-                        </p>
-                    </div>
-                    <div class="card-body">
-                        {% if prompts_data.get('prompts') and prompts_data.prompts is iterable %}
-                        {% for prompt in prompts_data.prompts[:3] %}
-                        {% if prompt is mapping %}
-                        <div class="mb-3 p-3 border rounded">
-                            <h6 class="text-secondary mb-2">
-                                <i class="fas fa-image me-2"></i>{{ prompt.get('headline', 'Prompt ' + loop.index|string) }}
-                            </h6>
-                            <div class="small text-muted">
-                                <strong>Concept:</strong> {{ prompt.get('concept', 'Brand') }}<br>
-                                <strong>Emotion:</strong> {{ prompt.get('target_emotion', 'Engaging') }}<br>
-                                <strong>Type:</strong> {{ prompt.get('content_type', 'Instagram post') }}
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% endfor %}
-                        {% else %}
-                        <div class="alert alert-light">
-                            <h6><i class="fas fa-check-circle me-2"></i>Prompts Generated</h6>
-                            <p class="mb-0 small">Professional AI prompts created and optimized for high-quality image generation.</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
             </div>
-            {% endif %}
         </div>
     </section>
 

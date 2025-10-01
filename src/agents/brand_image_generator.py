@@ -1,8 +1,5 @@
-"""Brand image generator - creates actual Instagram images using configurable AI providers."""
+"""Brand image generator - creates actual Instagram images using Gemini API."""
 
-import requests
-import base64
-import json
 from typing import Dict, Any
 from pathlib import Path
 from .base_agent import BaseAgent
@@ -11,126 +8,94 @@ from ai_providers.base_provider import AICapability
 
 class BrandImageGenerator(BaseAgent):
     """Generates Instagram images using Gemini API."""
-    
+
     def __init__(self):
-        super().__init__("brand-image-generator", "metrics")
+        super().__init__("brand_image_generator", "metrics")
         self.ai_provider = AIProviderFactory.get_configured_provider(AICapability.IMAGE_GENERATION)
-    
-    def generate_image_with_ai(self, prompt: str) -> bytes:
-        """Generate image using configured AI provider."""
-        self.logger.info(f"Generating image with {self.ai_provider.name}")
-        return self.ai_provider.generate_image(prompt)
-    
-    def save_image(self, image_data: bytes, filename: str, domain: str) -> str:
-        """Save image data as PNG file."""
-        output_dir = self.output_dir / "images" / domain
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        filepath = output_dir / filename
-        
-        # For demonstration, create a simple placeholder file
-        # In practice, you'd save the actual image data
-        with open(filepath, 'wb') as f:
-            f.write(image_data)
-        
-        self.logger.info(f"Saved image: {filepath}")
-        return str(filepath)
-    
-    def generate_images(self, prompts_data: Dict[str, Any], domain: str) -> Dict[str, Any]:
-        """Generate all Instagram images from prompts."""
 
-        company_name = prompts_data.get("company_name", "Company")
-        prompts = prompts_data.get("prompts", []) or prompts_data.get("instagram_prompts", [])
-
-        generation_results = {
-            "company_name": company_name,
-            "domain": domain,
-            "timestamp": self.get_timestamp(),
-            "total_images_generated": len(prompts),
-            "ai_provider": self.ai_provider.name,
-            "ai_model": self.ai_provider.model,
-            "images": [],
-            "generation_status": "completed"
-        }
-
-        for index, prompt_info in enumerate(prompts, 1):
-            post_number = index  # Use incremental counter instead of prompt's post_number
-            gemini_prompt = prompt_info.get("gemini_prompt", "")
-
-            try:
-                # Generate image
-                self.logger.info(f"Generating image {post_number} for {company_name}")
-
-                try:
-                    # Use AI provider for image generation
-                    image_data = self.generate_image_with_ai(gemini_prompt)
-                except Exception as img_error:
-                    self.logger.warning(f"AI image generation failed: {img_error}, using placeholder")
-                    image_data = b"placeholder_instagram_image_data"
-
-                # Save image
-                filename = f"{domain}-post-{post_number}.png"
-                filepath = self.save_image(image_data, filename, domain)
-
-                image_result = {
-                    "post_number": post_number,
-                    "concept": prompt_info.get("concept", ""),
-                    "filename": filename,
-                    "filepath": filepath,
-                    "prompt_used": gemini_prompt[:100] + "...",  # Truncated for storage
-                    "generation_status": "success",
-                    "file_size": len(image_data)
-                }
-
-                generation_results["images"].append(image_result)
-
-            except Exception as e:
-                self.logger.error(f"Error generating image {post_number}: {e}")
-                error_result = {
-                    "post_number": post_number,
-                    "generation_status": "failed",
-                    "error": str(e)
-                }
-                generation_results["images"].append(error_result)
-
-        return generation_results
-    
     def process(self, url: str, prompts_data: Dict[str, Any] = None, **kwargs) -> Dict[str, Any]:
         """
         Process and generate brand images.
 
         Args:
             url: The website URL
-            prompts_data: Instagram prompts data with generated prompts
+            prompts_data: Instagram prompts data from instagram_prompt_generator
             **kwargs: Additional parameters
 
         Returns:
-            Image generation results data
-
-        Note:
-            This agent uses pre-generated prompts from instagram_prompt_generator.
-            Dynamic prompt loading from .md files is supported by other agents in the pipeline.
+            Image generation results data with PNG files saved
         """
-        try:
-            if not prompts_data:
-                raise ValueError("prompts_data is required")
+        if not prompts_data:
+            raise ValueError("prompts_data is required")
 
-            domain = self.sanitize_domain(url)
+        domain = self.sanitize_domain(url)
 
-            # Generate images
-            generation_results = self.generate_images(prompts_data, domain)
+        # Extract prompts from the prompts_data JSON
+        prompts = prompts_data.get("prompts", []) or prompts_data.get("instagram_prompts", [])
 
-            # Save generation log
-            filename = self.get_output_filename(domain)
-            self.save_json(generation_results, filename, f"images/{domain}")
+        if not prompts:
+            raise ValueError("No prompts found in prompts_data")
 
-            self.logger.info(f"Image generation completed for {url}")
-            return generation_results
+        # Create output directory for images: metrics/images/{domain-name}/
+        output_dir = self.output_dir / "images" / domain
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-        except Exception as e:
-            self.logger.error(f"Error generating images for {url}: {e}")
-            return {"error": str(e), "url": url}
-    
+        generation_results = {
+            "domain": domain,
+            "url": url,
+            "timestamp": self.get_timestamp(),
+            "total_images": len(prompts),
+            "ai_provider": self.ai_provider.name,
+            "ai_model": self.ai_provider.model,
+            "images": []
+        }
+
+        # Generate each image
+        for index, prompt_info in enumerate(prompts, 1):
+            gemini_prompt = prompt_info.get("gemini_prompt", "")
+
+            if not gemini_prompt:
+                self.logger.warning(f"No gemini_prompt found for post {index}, skipping")
+                continue
+
+            try:
+                self.logger.info(f"Generating image {index}/{len(prompts)} for {domain}")
+
+                # Generate image using AI provider
+                image_data = self.ai_provider.generate_image(gemini_prompt)
+
+                # Save image as PNG: {domain-name}-post-{number}.png
+                filename = f"{domain}-post-{index}.png"
+                filepath = output_dir / filename
+
+                with open(filepath, 'wb') as f:
+                    f.write(image_data)
+
+                self.logger.info(f"Saved image: {filepath}")
+
+                generation_results["images"].append({
+                    "post_number": index,
+                    "filename": filename,
+                    "filepath": str(filepath),
+                    "file_size": len(image_data),
+                    "status": "success"
+                })
+
+            except Exception as e:
+                self.logger.error(f"Error generating image {index}: {e}")
+                generation_results["images"].append({
+                    "post_number": index,
+                    "status": "failed",
+                    "error": str(e)
+                })
+
+        # Save generation metadata to metrics/images/{domain-name}/{domain-name}-metadata.json
+        metadata_filename = f"{domain}-metadata.json"
+        self.save_json(generation_results, metadata_filename, f"images/{domain}")
+
+        self.logger.info(f"Generated {len([img for img in generation_results['images'] if img.get('status') == 'success'])} images in metrics/images/{domain}/")
+        return generation_results
+
     def get_output_filename(self, domain: str) -> str:
-        """Generate output filename for image generation results."""
-        return f"{domain}-image-generation-{self.get_timestamp()}.json"
+        """Generate output filename for image generation metadata."""
+        return f"{domain}-metadata.json"

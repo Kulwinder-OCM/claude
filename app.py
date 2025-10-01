@@ -98,18 +98,17 @@ def results(session_id):
     
     # Extract image information if available
     images = []
-    if ('phases' in results and 
-        'brand_images' in results['phases'] and 
+    if ('phases' in results and
+        'brand_images' in results['phases'] and
         results['phases']['brand_images']['status'] == 'completed'):
-        
+
         image_data = results['phases']['brand_images']['data']
         if 'images' in image_data:
             for img in image_data['images']:
-                if img.get('generation_status') == 'success':
+                if img.get('status') == 'success':
                     images.append({
                         'filename': img['filename'],
                         'filepath': img['filepath'],
-                        'concept': img.get('concept', 'Brand Image'),
                         'post_number': img.get('post_number', 1),
                         'file_size': img.get('file_size', 0)
                     })
