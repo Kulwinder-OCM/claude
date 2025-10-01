@@ -47,30 +47,50 @@ class BrandImageGenerator(BaseAgent):
         image = Image.new('RGB', (width, height), bg_rgb)
         draw = ImageDraw.Draw(image)
 
-        # Try to load custom font, fallback to default
-        try:
-            # Try common font locations
-            font_paths = [
-                f"/System/Library/Fonts/{font_family}.ttf",
-                f"/Library/Fonts/{font_family}.ttf",
-                f"/usr/share/fonts/truetype/{font_family.lower()}/{font_family}.ttf",
+        # Try to load custom font, fallback to common system fonts
+        font = None
+        font_size = 48
+
+        # Try brand font first
+        font_paths = [
+            f"/System/Library/Fonts/{font_family}.ttf",
+            f"/Library/Fonts/{font_family}.ttf",
+            f"/usr/share/fonts/truetype/{font_family.lower()}/{font_family}.ttf",
+        ]
+
+        for font_path in font_paths:
+            try:
+                font = ImageFont.truetype(font_path, font_size)
+                self.logger.info(f"Loaded brand font: {font_path}")
+                break
+            except:
+                continue
+
+        # If brand font not found, try common fallback fonts
+        if not font:
+            fallback_fonts = [
+                "/System/Library/Fonts/Helvetica.ttc",  # macOS
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Linux
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",  # Linux
+                "C:\\Windows\\Fonts\\arial.ttf",  # Windows
             ]
 
-            font = None
-            for font_path in font_paths:
+            for fallback_path in fallback_fonts:
                 try:
-                    font = ImageFont.truetype(font_path, 48)
+                    font = ImageFont.truetype(fallback_path, font_size)
+                    self.logger.info(f"Loaded fallback font: {fallback_path}")
                     break
                 except:
                     continue
 
-            if not font:
-                # Try system default fonts
-                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 48)
-        except:
-            # Fallback to PIL default
-            font = ImageFont.load_default()
-            self.logger.warning("Using default font - custom font not found")
+        # Last resort: use PIL default at larger size
+        if not font:
+            try:
+                font = ImageFont.load_default(size=font_size)
+                self.logger.warning(f"Using PIL default font at size {font_size}")
+            except:
+                font = ImageFont.load_default()
+                self.logger.warning("Using PIL default font (size cannot be set)")
 
         # Wrap text to fit width with padding
         padding = 80
