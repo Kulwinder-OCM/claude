@@ -244,21 +244,44 @@ class BrandImageGenerator(BaseAgent):
         # Generate each image
         for index, prompt_info in enumerate(prompts, 1):
             # Extract the actual message text from the gemini_prompt
-            # Look for quoted text like 'Your Website. Your Control.'
             import re
 
             gemini_prompt = prompt_info.get("gemini_prompt", "")
             theme = prompt_info.get("theme", "")
 
-            # Try to extract quoted text from gemini_prompt
-            quoted_texts = re.findall(r"['\"]([^'\"]+)['\"]", gemini_prompt)
+            # Look for text patterns like: "The text 'Message Here' should appear"
+            # These patterns indicate the actual display text
+            text_patterns = [
+                r"[Tt]he text ['\"]([^'\"]+)['\"]",
+                r"[Tt]ext ['\"]([^'\"]+)['\"]",
+                r"should (read|say|appear|display)[^'\"]*['\"]([^'\"]+)['\"]",
+            ]
 
-            # Filter for actual message text (not color codes or filenames)
             message_text = None
-            for text in quoted_texts:
-                if not text.startswith('#') and len(text) > 10 and not text.endswith('.png'):
-                    message_text = text
+            for pattern in text_patterns:
+                matches = re.findall(pattern, gemini_prompt)
+                if matches:
+                    # For patterns with groups, get the last capturing group
+                    if isinstance(matches[0], tuple):
+                        message_text = matches[0][-1]
+                    else:
+                        message_text = matches[0]
                     break
+
+            # If no pattern match, try extracting quoted text but filter better
+            if not message_text:
+                quoted_texts = re.findall(r"['\"]([^'\"]{10,})['\"]", gemini_prompt)
+                for text in quoted_texts:
+                    # Skip if it looks like code, hex colors, file paths, or dimensions
+                    if (not text.startswith('#') and
+                        not text.endswith('.png') and
+                        not 'px' in text.lower() and
+                        not 'opacity' in text.lower() and
+                        not '1080' in text and
+                        not 'background' in text.lower() and
+                        not 'font' in text.lower()):
+                        message_text = text
+                        break
 
             # Fallback to theme or headline
             text = message_text or theme or prompt_info.get("headline", "") or f"Post {index}"
