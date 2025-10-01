@@ -52,13 +52,13 @@ class BrandImageGenerator(BaseAgent):
         font_size = 48
 
         # Try brand font first
-        font_paths = [
+        brand_font_paths = [
             f"/System/Library/Fonts/{font_family}.ttf",
             f"/Library/Fonts/{font_family}.ttf",
             f"/usr/share/fonts/truetype/{font_family.lower()}/{font_family}.ttf",
         ]
 
-        for font_path in font_paths:
+        for font_path in brand_font_paths:
             try:
                 font = ImageFont.truetype(font_path, font_size)
                 self.logger.info(f"Loaded brand font: {font_path}")
@@ -66,22 +66,34 @@ class BrandImageGenerator(BaseAgent):
             except:
                 continue
 
-        # If brand font not found, try common fallback fonts
+        # If brand font not found, try most common cross-platform fonts
         if not font:
-            fallback_fonts = [
-                "/System/Library/Fonts/Helvetica.ttc",  # macOS
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",  # Linux
-                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",  # Linux
-                "C:\\Windows\\Fonts\\arial.ttf",  # Windows
+            common_fonts = [
+                # Sans-serif fonts - most common
+                "Arial", "Helvetica", "DejaVuSans", "Liberation Sans",
+                # Fallback generic names
+                "sans-serif", "default"
             ]
 
-            for fallback_path in fallback_fonts:
-                try:
-                    font = ImageFont.truetype(fallback_path, font_size)
-                    self.logger.info(f"Loaded fallback font: {fallback_path}")
+            font_locations = [
+                "/System/Library/Fonts/{}.ttc",  # macOS
+                "/System/Library/Fonts/{}.ttf",  # macOS
+                "/usr/share/fonts/truetype/dejavu/{}.ttf",  # Linux DejaVu
+                "/usr/share/fonts/truetype/liberation/{}-Regular.ttf",  # Linux Liberation
+                "C:\\Windows\\Fonts\\{}.ttf",  # Windows
+            ]
+
+            for font_name in common_fonts:
+                for location_template in font_locations:
+                    try:
+                        font_path = location_template.format(font_name)
+                        font = ImageFont.truetype(font_path, font_size)
+                        self.logger.info(f"Loaded common font: {font_path}")
+                        break
+                    except:
+                        continue
+                if font:
                     break
-                except:
-                    continue
 
         # Last resort: use PIL default at larger size
         if not font:
