@@ -9,7 +9,7 @@ from pathlib import Path
 # Add src to path
 sys.path.append(str(Path(__file__).parent / "src"))
 
-from orchestrator import BrandWorkflowOrchestrator
+from brand_workflow_orchestrator import BrandWorkflowOrchestrator
 from ai_providers.ai_factory import AIProviderFactory
 from config import config
 
@@ -53,6 +53,7 @@ Examples:
 Available agents:
   screenshot  - Capture and analyze website screenshots
   business    - AI-powered comprehensive business intelligence
+  founders    - Extract detailed founder and leadership information only
   content     - AI-generated social media content strategy  
   prompts     - Generate Instagram image prompts
   images      - Generate actual Instagram images with AI
@@ -71,7 +72,7 @@ AI Provider Configuration:
     
     parser.add_argument("url", nargs="?", help="Website URL to analyze")
     parser.add_argument("--agent", 
-                       choices=["screenshot", "business", "content", "prompts", "images", "complete"],
+                       choices=["screenshot", "business", "founders", "content", "prompts", "images", "complete"],
                        default="complete", 
                        help="Which agent to run (default: complete workflow)")
     parser.add_argument("--verbose", "-v", action="store_true", 

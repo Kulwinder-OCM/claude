@@ -28,7 +28,7 @@ class ScreenshotAnalyzer(BaseAgent):
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
             }
-            response = requests.get(url, headers=headers, timeout=30)
+            response = requests.get(url, headers=headers, timeout=120)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
 

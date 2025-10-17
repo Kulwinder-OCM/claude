@@ -126,6 +126,108 @@
                         <p><strong>Value Proposition:</strong></p>
                         <p class="text-muted">{{ bi_data.company.valueProposition }}</p>
                         {% endif %}
+                        
+                        <!-- Social Media Links -->
+                        {% if bi_data.get('socialMediaAccounts') and bi_data.socialMediaAccounts is iterable and bi_data.socialMediaAccounts|length > 0 %}
+                        <div class="mt-3">
+                            <p><strong>Social Media:</strong></p>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for social in bi_data.socialMediaAccounts %}
+                                <a href="{{ social.url }}" target="_blank" class="btn btn-outline-primary btn-sm social-media-btn" 
+                                   title="{{ social.platform }} - {{ social.handle }}">
+                                    <i class="fab fa-{{ social.platform.lower() }} me-1"></i>
+                                    {{ social.platform }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Founder Details -->
+                        {% if bi_data.get('founders') and bi_data.founders is iterable and bi_data.founders|length > 0 %}
+                        <div class="mt-4">
+                            <h5><i class="fas fa-user-tie me-2 text-info"></i>Founders & Leadership</h5>
+                            {% for founder in bi_data.founders %}
+                            <div class="founder-card mb-3 p-3 border rounded bg-light">
+                                <div class="d-flex align-items-start">
+                                    <div class="founder-avatar me-3">
+                                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 18px; font-weight: bold;">
+                                            {{ founder.name[0] if founder.name else '?' }}
+                                        </div>
+                                    </div>
+                                    <div class="founder-details flex-grow-1">
+                                        <h6 class="mb-1">
+                                            {{ founder.name if founder.name else 'Unknown' }}
+                                            {% if founder.role %}
+                                            <span class="badge bg-secondary ms-2">{{ founder.role }}</span>
+                                            {% endif %}
+                                        </h6>
+                                        {% if founder.bio %}
+                                        <p class="text-muted mb-2 small">{{ founder.bio }}</p>
+                                        {% endif %}
+                                        
+                                        {% if founder.experience and founder.experience.get('current') %}
+                                        <p class="mb-1 small">
+                                            <strong>Current:</strong> {{ founder.experience.current }}
+                                        </p>
+                                        {% endif %}
+                                        
+                                        {% if founder.experience and founder.experience.get('totalExperience') %}
+                                        <p class="mb-1 small">
+                                            <strong>Experience:</strong> {{ founder.experience.totalExperience }}
+                                        </p>
+                                        {% endif %}
+                                        
+                                        {% if founder.expertise and founder.expertise is iterable and founder.expertise|length > 0 %}
+                                        <div class="mb-2">
+                                            <strong class="small">Expertise:</strong>
+                                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                                {% for skill in founder.expertise[:4] %}
+                                                <span class="badge bg-light text-dark small">{{ skill }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if founder.achievements and founder.achievements is iterable and founder.achievements|length > 0 %}
+                                        <div class="mb-2">
+                                            <strong class="small">Notable Achievements:</strong>
+                                            <ul class="list-unstyled mb-0 mt-1">
+                                                {% for achievement in founder.achievements[:2] %}
+                                                <li class="small text-muted">
+                                                    <i class="fas fa-star text-warning me-1"></i>{{ achievement }}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if founder.personalBrand %}
+                                        <div class="mb-2">
+                                            <strong class="small">Personal Brand:</strong>
+                                            <p class="small text-muted mb-0 mt-1">
+                                                <i class="fas fa-user-circle text-info me-1"></i>{{ founder.personalBrand }}
+                                            </p>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- {% if founder.extractionConfidence %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Confidence: 
+                                                <span class="badge {% if founder.extractionConfidence == 'high' %}bg-success{% elif founder.extractionConfidence == 'medium' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                                    {{ founder.extractionConfidence }}
+                                                </span>
+                                            </small>
+                                        </div>
+                                        {% endif %} -->
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                     {% endif %}
 
@@ -592,6 +694,39 @@
     font-weight: 600;
 }
 
+/* Founder Cards */
+.founder-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.3s ease;
+}
+
+.founder-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: #3b82f6 !important;
+}
+
+.founder-avatar {
+    flex-shrink: 0;
+}
+
+.founder-details h6 {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.founder-details .badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.founder-details .badge.bg-light {
+    background-color: #e2e8f0 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .brand-color-card {
@@ -611,7 +746,54 @@
     .font-sample-large {
         font-size: 36px;
     }
+    
+    .founder-card {
+        padding: 1rem !important;
+    }
+    
+    .founder-avatar div {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 16px !important;
+    }
 }
+
+/* Social Media Button Styles */
+.social-media-btn {
+    transition: all 0.3s ease;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    text-decoration: none;
+}
+
+.social-media-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    text-decoration: none;
+}
+
+.social-media-btn i {
+    font-size: 1rem;
+}
+
+/* Platform-specific colors */
+.social-media-btn:hover.fa-facebook { background-color: #1877f2; color: white; border-color: #1877f2; }
+.social-media-btn:hover.fa-twitter { background-color: #1da1f2; color: white; border-color: #1da1f2; }
+.social-media-btn:hover.fa-instagram { background-color: #e4405f; color: white; border-color: #e4405f; }
+.social-media-btn:hover.fa-linkedin { background-color: #0077b5; color: white; border-color: #0077b5; }
+.social-media-btn:hover.fa-youtube { background-color: #ff0000; color: white; border-color: #ff0000; }
+.social-media-btn:hover.fa-tiktok { background-color: #000000; color: white; border-color: #000000; }
+.social-media-btn:hover.fa-pinterest { background-color: #bd081c; color: white; border-color: #bd081c; }
+.social-media-btn:hover.fa-github { background-color: #333333; color: white; border-color: #333333; }
+.social-media-btn:hover.fa-medium { background-color: #00ab6c; color: white; border-color: #00ab6c; }
+.social-media-btn:hover.fa-reddit { background-color: #ff4500; color: white; border-color: #ff4500; }
+.social-media-btn:hover.fa-behance { background-color: #1769ff; color: white; border-color: #1769ff; }
+.social-media-btn:hover.fa-dribbble { background-color: #ea4c89; color: white; border-color: #ea4c89; }
+.social-media-btn:hover.fa-whatsapp { background-color: #25d366; color: white; border-color: #25d366; }
+.social-media-btn:hover.fa-telegram { background-color: #0088cc; color: white; border-color: #0088cc; }
+.social-media-btn:hover.fa-discord { background-color: #5865f2; color: white; border-color: #5865f2; }
+.social-media-btn:hover.fa-snapchat { background-color: #fffc00; color: black; border-color: #fffc00; }
 </style>
 {% endblock %}
 

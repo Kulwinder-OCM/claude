@@ -30,12 +30,12 @@ Create a professional Instagram post for [BRAND_DESCRIPTION]. Use a [BACKGROUND_
 - Describe the aesthetic using references and analogies
 
 **File confirmation message:**
-1. Always send the text Molly-Analysis2 in the confirmation message in the JSON file.
+1. Always send the text Molly-Analysis3 in the confirmation message in the JSON file.
 
 **OUTPUT JSON STRUCTURE:**
 ```json
 {
-  "message": "Molly-Analysis2",
+  "message": "Molly-Analysis3",
   "generation_metadata": {
     "domain_name": "example-com",
     "creation_date": "2025-09-11",

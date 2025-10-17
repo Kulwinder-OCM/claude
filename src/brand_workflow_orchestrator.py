@@ -128,6 +128,52 @@ class BrandWorkflowOrchestrator(BaseAgent):
         """Generate output filename for workflow orchestrator (required by BaseAgent)."""
         return f"{domain}-workflow-results-{self.get_timestamp()}.json"
 
+    def run_single_agent(self, agent_name: str, url: str) -> Dict[str, Any]:
+        """
+        Run a single agent instead of the complete workflow.
+        
+        Args:
+            agent_name: Name of the agent to run
+            url: Website URL to analyze
+            
+        Returns:
+            Results from the specified agent
+        """
+        self.logger.info(f"Running single agent: {agent_name} for {url}")
+        
+        try:
+            if agent_name == "business":
+                return self.business_analyzer.process(url)
+            elif agent_name == "founders":
+                # Extract only founder details
+                return self.business_analyzer.extract_founders_only(url)
+            elif agent_name == "screenshot":
+                return self.screenshot_analyzer.process(url)
+            elif agent_name == "content":
+                # Content creator needs business intel and design analysis
+                business_intel = self.business_analyzer.process(url)
+                design_analysis = self.screenshot_analyzer.process(url)
+                return self.content_creator.process(url, business_intel=business_intel, design_analysis=design_analysis)
+            elif agent_name == "prompts":
+                # Prompt generator needs social content
+                business_intel = self.business_analyzer.process(url)
+                design_analysis = self.screenshot_analyzer.process(url)
+                social_content = self.content_creator.process(url, business_intel=business_intel, design_analysis=design_analysis)
+                return self.prompt_generator.process(url, social_content=social_content)
+            elif agent_name == "images":
+                # Image generator needs prompts
+                business_intel = self.business_analyzer.process(url)
+                design_analysis = self.screenshot_analyzer.process(url)
+                social_content = self.content_creator.process(url, business_intel=business_intel, design_analysis=design_analysis)
+                instagram_prompts = self.prompt_generator.process(url, social_content=social_content)
+                return self.image_generator.process(url, prompts_data=instagram_prompts)
+            else:
+                raise ValueError(f"Unknown agent: {agent_name}")
+                
+        except Exception as e:
+            self.logger.error(f"Error running {agent_name} agent: {e}")
+            return {"error": str(e)}
+
 
 def main():
     """Main entry point for CLI usage."""

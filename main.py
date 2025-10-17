@@ -12,7 +12,7 @@ from pathlib import Path
 # Add src to path so we can import our modules
 sys.path.append(str(Path(__file__).parent / "src"))
 
-from orchestrator import BrandWorkflowOrchestrator
+from brand_workflow_orchestrator import BrandWorkflowOrchestrator
 
 def main():
     """Main entry point."""
@@ -26,6 +26,7 @@ Examples:
   python main.py https://example.com                    # Run complete workflow
   python main.py https://example.com --agent screenshot # Run only screenshot analysis
   python main.py https://example.com --agent business   # Run only business intelligence
+  python main.py https://example.com --agent founders   # Run only founder extraction
   python main.py https://example.com --agent content    # Run only social content creation
   python main.py https://example.com --agent prompts    # Run only Instagram prompts
   python main.py https://example.com --agent images     # Run only image generation
@@ -33,6 +34,7 @@ Examples:
 Available agents:
   screenshot  - Capture and analyze website screenshots
   business    - Gather comprehensive business intelligence
+  founders    - Extract detailed founder and leadership information only
   content     - Create social media content strategy
   prompts     - Generate Instagram image prompts
   images      - Generate actual Instagram images
@@ -42,7 +44,7 @@ Available agents:
     
     parser.add_argument("url", help="Website URL to analyze")
     parser.add_argument("--agent", 
-                       choices=["screenshot", "business", "content", "prompts", "images", "complete"],
+                       choices=["screenshot", "business", "founders", "content", "prompts", "images", "complete"],
                        default="complete", 
                        help="Which agent to run (default: complete workflow)")
     parser.add_argument("--verbose", "-v", action="store_true", 
