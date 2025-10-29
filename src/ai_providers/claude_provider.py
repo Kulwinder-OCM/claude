@@ -11,7 +11,7 @@ from .base_provider import BaseAIProvider, AICapability
 class ClaudeProvider(BaseAIProvider):
     """Claude AI provider for text analysis and generation."""
     
-    def __init__(self, model: str = "claude-3-5-sonnet-20241022"):
+    def __init__(self, model: str = "claude-3-5-haiku-20241022"):
         super().__init__("claude", model)
         self.api_key = self._get_api_key()
         self.base_url = "https://api.anthropic.com/v1/messages"
@@ -307,13 +307,14 @@ IMPORTANT: Analyze this ACTUAL website content thoroughly. Extract REAL informat
             "provider": self.name
         })
 
-    def create_content_strategy(self, business_data: Dict[str, Any], design_data: Dict[str, Any] = None, agent_name: str = "social_content_creator", **kwargs) -> Dict[str, Any]:
+    def create_content_strategy(self, business_data: Dict[str, Any], design_data: Dict[str, Any] = None, facebook_analysis: Dict[str, Any] = None, agent_name: str = "social_content_creator", **kwargs) -> Dict[str, Any]:
         """
         Create social media content strategy with Claude using dynamic prompts from markdown files.
 
         Args:
             business_data: Business intelligence data
             design_data: Design analysis data
+            facebook_analysis: Facebook posts analysis data
             agent_name: Name of the agent for loading the corresponding .md prompt file
             **kwargs: Additional arguments
 
@@ -347,9 +348,19 @@ IMPORTANT: Analyze this ACTUAL website content thoroughly. Extract REAL informat
         Design Analysis:
         {json.dumps(design_data, indent=2) if design_data else "No design data provided"}
 
-        Create 3 Instagram post concepts that align with the brand and resonate with their target audience.
+        Facebook Posts Analysis:
+        {json.dumps(facebook_analysis, indent=2) if facebook_analysis else "No Facebook posts analysis available"}
 
-        IMPORTANT: Return ONLY the JSON object as specified in the system prompt. Do not include any explanatory text, markdown formatting, or other content outside of the JSON structure."""
+            Create 3 Instagram post concepts that align with the brand and resonate with their target audience.
+            If Facebook analysis is available, use the tone, style, hashtags, and content patterns from the Facebook posts to create content that feels authentic to the brand owner's voice.
+
+            LANGUAGE REQUIREMENT: If Facebook analysis shows a detected language (detected_language field), generate ALL captions and content in that same language. For example:
+            - If detected_language is "fr", generate French captions
+            - If detected_language is "da", generate Danish captions  
+            - If detected_language is "en", generate English captions
+            - If no language is detected, default to English
+
+            IMPORTANT: Return ONLY the JSON object as specified in the system prompt. Do not include any explanatory text, markdown formatting, or other content outside of the JSON structure."""
         
         response = self._make_request(prompt, system_prompt, **kwargs)
         

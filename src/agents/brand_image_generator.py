@@ -108,15 +108,16 @@ class BrandImageGenerator(BaseAgent):
         padding = 80
         max_width = width - (padding * 2)
 
-        # Wrap text manually
+        # Wrap text manually with better French text handling
         words = text.split()
         lines = []
         current_line = []
 
         for word in words:
             test_line = ' '.join(current_line + [word])
-            # Estimate width (rough approximation)
-            if len(test_line) * 40 < max_width:  # Rough character width estimate
+            # Better width estimation for French text (account for accents and longer words)
+            char_width = 35 if any(char in word for char in 'àâäéèêëïîôöùûüÿç') else 40
+            if len(test_line) * char_width < max_width:
                 current_line.append(word)
             else:
                 if current_line:
@@ -126,10 +127,10 @@ class BrandImageGenerator(BaseAgent):
         if current_line:
             lines.append(' '.join(current_line))
 
-        # Limit to reasonable number of lines
-        if len(lines) > 8:
-            lines = lines[:8]
-            lines[-1] = lines[-1][:50] + "..."
+        # Limit to reasonable number of lines but preserve French text
+        if len(lines) > 6:
+            lines = lines[:6]
+            # Don't truncate French text, just limit lines
 
         wrapped_text = '\n'.join(lines)
 
@@ -252,9 +253,13 @@ class BrandImageGenerator(BaseAgent):
             # Look for text patterns like: "The text 'Message Here' should appear"
             # These patterns indicate the actual display text
             text_patterns = [
-                r"[Tt]he text ['\"]([^'\"]+)['\"]",
-                r"[Tt]ext ['\"]([^'\"]+)['\"]",
-                r"should (read|say|appear|display)[^'\"]*['\"]([^'\"]+)['\"]",
+                r"[Tt]he main text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"[Tt]he French text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"[Tt]he text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"[Tt]ext ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"should (read|say|appear|display)[^'\"]*['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"testimonial text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"quote ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
             ]
 
             message_text = None
@@ -270,7 +275,7 @@ class BrandImageGenerator(BaseAgent):
 
             # If no pattern match, try extracting quoted text but filter better
             if not message_text:
-                quoted_texts = re.findall(r"['\"]([^'\"]{10,})['\"]", gemini_prompt)
+                quoted_texts = re.findall(r"['\"]([^'\"]{15,})['\"]", gemini_prompt)
                 for text in quoted_texts:
                     # Skip if it looks like code, hex colors, file paths, or dimensions
                     if (not text.startswith('#') and
@@ -279,7 +284,10 @@ class BrandImageGenerator(BaseAgent):
                         not 'opacity' in text.lower() and
                         not '1080' in text and
                         not 'background' in text.lower() and
-                        not 'font' in text.lower()):
+                        not 'font' in text.lower() and
+                        not 'color:' in text.lower() and
+                        not 'turquoise' in text.lower() and
+                        not 'charcoal' in text.lower()):
                         message_text = text
                         break
 

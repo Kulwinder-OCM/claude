@@ -10,6 +10,7 @@ from agents.screenshot_analyzer import ScreenshotAnalyzer
 from agents.social_content_creator import SocialContentCreator
 from agents.instagram_prompt_generator import InstagramPromptGenerator
 from agents.brand_image_generator import BrandImageGenerator
+from agents.facebook_scraper import FacebookScraper
 
 class BrandWorkflowOrchestrator(BaseAgent):
     """Orchestrates the complete brand analysis and content creation workflow."""
@@ -23,6 +24,7 @@ class BrandWorkflowOrchestrator(BaseAgent):
         self.content_creator = SocialContentCreator()
         self.prompt_generator = InstagramPromptGenerator()
         self.image_generator = BrandImageGenerator()
+        self.facebook_scraper = FacebookScraper()
 
     def run_complete_workflow(self, url: str) -> Dict[str, Any]:
         """
@@ -31,7 +33,7 @@ class BrandWorkflowOrchestrator(BaseAgent):
         Workflow Steps:
         1. Business Intelligence Analysis (URL → business intel JSON)
         2. Design Style Analysis (URL → design analysis JSON)
-        3. Social Content Strategy (business intel JSON → social content JSON)
+        3. Social Content Strategy & Facebook Scraping (business intel JSON → social content JSON + Facebook posts JSON)
         4. Instagram Prompt Generation (design + social JSON → prompts JSON)
         5. Brand Image Generation (prompts JSON → PNG images)
 
@@ -66,20 +68,49 @@ class BrandWorkflowOrchestrator(BaseAgent):
                 "data": design_analysis
             }
 
-            # Phase 3: Social Content Creation
-            self.logger.info("Phase 3: Social media content creation")
+            # Phase 3: Facebook Scraping (before social content creation)
+            self.logger.info("Phase 3: Facebook scraping for content analysis")
+            
+            # Extract Facebook URL from business intelligence for scraping
+            facebook_url = None
+            if "socialMediaAccounts" in business_intel:
+                for account in business_intel["socialMediaAccounts"]:
+                    if account.get("platform", "").lower() == "facebook":
+                        facebook_url = account.get("url")
+                        break
+            
+            # Scrape Facebook posts if Facebook URL is found
+            facebook_posts = None
+            if facebook_url:
+                self.logger.info(f"Scraping Facebook posts from {facebook_url}")
+                facebook_posts = self.facebook_scraper.process(facebook_url, num_posts=5, original_url=url)
+                
+                workflow_results["phases"]["facebook_scraping"] = {
+                    "status": "completed" if facebook_posts.get("status") == "success" else "failed",
+                    "data": facebook_posts
+                }
+            else:
+                self.logger.info("No Facebook URL found in business intelligence, skipping Facebook scraping")
+                workflow_results["phases"]["facebook_scraping"] = {
+                    "status": "skipped",
+                    "reason": "No Facebook URL found"
+                }
+            
+            # Phase 4: Social Content Creation (with Facebook posts analysis)
+            self.logger.info("Phase 4: Social media content creation with Facebook analysis")
             social_content = self.content_creator.process(
                 url,
                 business_intel=business_intel,
-                design_analysis=design_analysis
+                design_analysis=design_analysis,
+                facebook_posts=facebook_posts
             )
             workflow_results["phases"]["social_content"] = {
                 "status": "completed",
                 "data": social_content
             }
 
-            # Phase 4: Instagram Prompt Generation
-            self.logger.info("Phase 4: Instagram prompt generation")
+            # Phase 5: Instagram Prompt Generation
+            self.logger.info("Phase 5: Instagram prompt generation")
             instagram_prompts = self.prompt_generator.process(
                 url,
                 social_content=social_content
@@ -89,8 +120,8 @@ class BrandWorkflowOrchestrator(BaseAgent):
                 "data": instagram_prompts
             }
 
-            # Phase 5: Brand Image Generation
-            self.logger.info("Phase 5: Brand image generation")
+            # Phase 6: Brand Image Generation
+            self.logger.info("Phase 6: Brand image generation")
             brand_images = self.image_generator.process(
                 url,
                 prompts_data=instagram_prompts
@@ -167,6 +198,21 @@ class BrandWorkflowOrchestrator(BaseAgent):
                 social_content = self.content_creator.process(url, business_intel=business_intel, design_analysis=design_analysis)
                 instagram_prompts = self.prompt_generator.process(url, social_content=social_content)
                 return self.image_generator.process(url, prompts_data=instagram_prompts)
+            elif agent_name == "facebook":
+                # Facebook scraper needs Facebook URL from business intelligence
+                business_intel = self.business_analyzer.process(url)
+                facebook_url = None
+                if "socialMediaAccounts" in business_intel:
+                    for account in business_intel["socialMediaAccounts"]:
+                        if account.get("platform", "").lower() == "facebook":
+                            facebook_url = account.get("url")
+                            break
+                
+                if facebook_url:
+                    results = self.facebook_scraper.process(facebook_url, num_posts=10, original_url=url)
+                    return results
+                else:
+                    return {"error": "No Facebook URL found in business intelligence", "status": "failed"}
             else:
                 raise ValueError(f"Unknown agent: {agent_name}")
                 
