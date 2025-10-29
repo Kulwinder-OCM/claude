@@ -450,6 +450,13 @@ IMPORTANT: Analyze this ACTUAL website content thoroughly. Extract REAL informat
 
         company_name = social_content.get("company_name", "Company")
 
+        # Extract detected language from social content
+        detected_language = None
+        if "brand_analysis" in social_content and "detected_language" in social_content["brand_analysis"]:
+            detected_language = social_content["brand_analysis"]["detected_language"]
+        elif "facebook_analysis" in social_content and "detected_language" in social_content["facebook_analysis"]:
+            detected_language = social_content["facebook_analysis"]["detected_language"]
+
         prompt = f"""Generate Instagram image prompts for {company_name}.
 
         Social Content Data:
@@ -457,7 +464,15 @@ IMPORTANT: Analyze this ACTUAL website content thoroughly. Extract REAL informat
 
         URL: {url}
 
-        Create 3 detailed Gemini prompts for Instagram image generation that align with the brand and social content strategy."""
+        Create 3 detailed Gemini prompts for Instagram image generation that align with the brand and social content strategy.
+
+        LANGUAGE REQUIREMENT: If the social content shows a detected language (detected_language field), generate ALL text overlays and prompts in that same language. For example:
+        - If detected_language is "fr", generate French text overlays
+        - If detected_language is "da", generate Danish text overlays  
+        - If detected_language is "en", generate English text overlays
+        - If no language is detected, default to English
+
+        IMPORTANT: Return ONLY the JSON object as specified in the system prompt. Do not include any explanatory text, markdown formatting, or other content outside of the JSON structure."""
 
         response = self._make_request(prompt, system_prompt, **kwargs)
 

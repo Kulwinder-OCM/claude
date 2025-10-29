@@ -116,7 +116,8 @@ class BrandImageGenerator(BaseAgent):
         for word in words:
             test_line = ' '.join(current_line + [word])
             # Better width estimation for French text (account for accents and longer words)
-            char_width = 35 if any(char in word for char in 'àâäéèêëïîôöùûüÿç') else 40
+            # French text tends to be longer, so use smaller char width
+            char_width = 30 if any(char in word for char in 'àâäéèêëïîôöùûüÿçñ') else 36
             if len(test_line) * char_width < max_width:
                 current_line.append(word)
             else:
@@ -128,8 +129,8 @@ class BrandImageGenerator(BaseAgent):
             lines.append(' '.join(current_line))
 
         # Limit to reasonable number of lines but preserve French text
-        if len(lines) > 6:
-            lines = lines[:6]
+        if len(lines) > 4:
+            lines = lines[:4]
             # Don't truncate French text, just limit lines
 
         wrapped_text = '\n'.join(lines)
@@ -250,9 +251,15 @@ class BrandImageGenerator(BaseAgent):
             gemini_prompt = prompt_info.get("gemini_prompt", "")
             theme = prompt_info.get("theme", "")
 
-            # Look for text patterns like: "The text 'Message Here' should appear"
+            # Look for text patterns like: "TEXT OVERLAY: 'Message Here'" or "reading 'Message Here'"
             # These patterns indicate the actual display text
             text_patterns = [
+                r"TEXT OVERLAY:\s*['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"text overlay:\s*['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"overlay:\s*['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"reading ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"text overlay.*?['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"overlay.*?reading ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
                 r"[Tt]he main text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
                 r"[Tt]he French text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
                 r"[Tt]he text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",

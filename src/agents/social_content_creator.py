@@ -53,6 +53,12 @@ class SocialContentCreator(BaseAgent):
             agent_name=agent_name
         )
 
+        # Add detected language to social content if available
+        if facebook_analysis and "detected_language" in facebook_analysis:
+            if "brand_analysis" not in social_content:
+                social_content["brand_analysis"] = {}
+            social_content["brand_analysis"]["detected_language"] = facebook_analysis["detected_language"]
+
         # Add metadata
         social_content.update({
             "url": url,

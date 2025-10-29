@@ -107,6 +107,20 @@ All analysis results are saved in the `metrics/` directory with organized subdir
 - **Solution**: Updated Claude provider to use working model `claude-3-5-haiku-20241022`
 - **Testing**: Verified all workflow phases now complete successfully
 - **Status**: ✅ Resolved - Complete workflow now functional
+
+**Multi-Language Image Generation Fix (2025-10-29)**
+- **Issue**: Overlay text on generated images was in English instead of detected language, and French text with apostrophes was truncated
+- **Root Cause**: 
+  - Instagram prompt generator not using detected language from social content
+  - Text extraction patterns not handling French text with apostrophes correctly
+  - Text wrapping logic cutting off French text
+- **Solution**: 
+  - Updated `generate_instagram_prompts` to extract and use detected language from social content
+  - Enhanced text extraction patterns to properly handle `TEXT OVERLAY: 'text'` format with apostrophes
+  - Improved text wrapping logic with better character width estimation for French text
+  - Ensured detected language is stored in social content for downstream use
+- **Testing**: Verified French text "Un trait après l'autre" now displays completely on images
+- **Status**: ✅ Resolved - Multi-language content generation working correctly
 - **Facebook Scraper Integration**: Successfully integrated Bright Data API for Facebook post scraping
 - **Configuration Updates**: Set date range to 2 months (start: 2 months ago, end: today), posts limit to 5
 - **Environment Configuration**: Removed hardcoded API keys, now reads from .env file
