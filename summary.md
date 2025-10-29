@@ -121,6 +121,33 @@ All analysis results are saved in the `metrics/` directory with organized subdir
   - Ensured detected language is stored in social content for downstream use
 - **Testing**: Verified French text "Un trait après l'autre" now displays completely on images
 - **Status**: ✅ Resolved - Multi-language content generation working correctly
+
+**Deployment Text Extraction Fix (2025-10-29)**
+- **Issue**: In deployed version, text extraction was capturing descriptive text instead of just the overlay text (e.g., "WEAR YOUR WEIRD diagonally across the image. Composition should feel spontaneous and")
+- **Root Cause**: Text extraction patterns were too broad and captured descriptive sentences from Gemini prompts
+- **Solution**: 
+  - Refined text extraction patterns to be more specific and avoid capturing descriptions
+  - Added text cleaning logic to remove descriptive words like "diagonally", "across", "composition", etc.
+  - Limited fallback extraction to short phrases (≤6 words) to avoid long descriptive text
+  - Added debugging logs to track extracted text
+- **Testing**: Verified "WEAR YOUR WEIRD diagonally across the image" → "WEAR YOUR WEIRD"
+- **Status**: ✅ Resolved - Clean text extraction for deployment
+
+**French Text Extraction Enhancement (2025-10-29)**
+- **Issue**: French text with apostrophes was being truncated (e.g., "Un trait après l'autre" → "Un trait après l")
+- **Root Cause**: 
+  - Text extraction patterns not matching French prompt formats ("Superposez le texte", "ajoutez le texte")
+  - Fallback extraction limited to 50 characters, truncating longer French phrases
+- **Solution**: 
+  - Added specific patterns for French prompts: "Superposez le texte", "ajoutez le texte", "le texte"
+  - Increased fallback extraction limit from 50 to 100 characters
+  - Enhanced text cleaning with French descriptive words
+  - Added intelligent text truncation for overly long extractions
+- **Testing**: 
+  - "Un trait après l'autre" → "Un trait après l'autre" ✅
+  - "Ma transformation" → "Ma transformation" ✅
+  - "Vos créations, votre transformation" → "Vos créations, votre transformation" ✅
+- **Status**: ✅ Resolved - Complete French text extraction working correctly
 - **Facebook Scraper Integration**: Successfully integrated Bright Data API for Facebook post scraping
 - **Configuration Updates**: Set date range to 2 months (start: 2 months ago, end: today), posts limit to 5
 - **Environment Configuration**: Removed hardcoded API keys, now reads from .env file

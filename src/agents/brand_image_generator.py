@@ -252,25 +252,23 @@ class BrandImageGenerator(BaseAgent):
             theme = prompt_info.get("theme", "")
 
             # Look for text patterns like: "TEXT OVERLAY: 'Message Here'" or "reading 'Message Here'"
-            # These patterns indicate the actual display text
+            # These patterns indicate the actual display text - be very specific to avoid capturing descriptions
             text_patterns = [
                 r"TEXT OVERLAY:\s*['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
                 r"text overlay:\s*['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
                 r"overlay:\s*['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
                 r"reading ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"text overlay.*?['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"overlay.*?reading ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"[Tt]he main text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"[Tt]he French text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"[Tt]he text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"[Tt]ext ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"should (read|say|appear|display)[^'\"]*['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"testimonial text ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
-                r"quote ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"Superposez le texte ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"ajoutez le texte ['\"]([^'\"]*(?:'[^'\"]*)*)['\"]",
+                r"le texte ['\"]([^'\"]*(?:'[^'\"]*)*)['\"].*?(?:apparaît|superpose)",
+                r"texte ['\"]([^'\"]*(?:'[^'\"]*)*)['\"].*?(?:apparaît|superpose)",
+                r"['\"]([^'\"]*(?:'[^'\"]*)*)['\"].*?(?:apparaît|superpose).*?(?:en police|en écriture)",
+                r"['\"]([A-Z][^'\"]*(?:'[^'\"]*)*)['\"].*?(?:in|with|using).*?(?:font|style)",
+                r"['\"]([A-Z][^'\"]*(?:'[^'\"]*)*)['\"].*?(?:diagonally|across|over)",
             ]
 
             message_text = None
-            for pattern in text_patterns:
+            for i, pattern in enumerate(text_patterns):
                 matches = re.findall(pattern, gemini_prompt)
                 if matches:
                     # For patterns with groups, get the last capturing group
@@ -278,13 +276,14 @@ class BrandImageGenerator(BaseAgent):
                         message_text = matches[0][-1]
                     else:
                         message_text = matches[0]
+                    self.logger.info(f"Text extracted using pattern {i+1}: '{message_text}'")
                     break
 
             # If no pattern match, try extracting quoted text but filter better
             if not message_text:
-                quoted_texts = re.findall(r"['\"]([^'\"]{15,})['\"]", gemini_prompt)
+                quoted_texts = re.findall(r"['\"]([^'\"]{5,100})['\"]", gemini_prompt)
                 for text in quoted_texts:
-                    # Skip if it looks like code, hex colors, file paths, or dimensions
+                    # Skip if it looks like code, hex colors, file paths, dimensions, or descriptive text
                     if (not text.startswith('#') and
                         not text.endswith('.png') and
                         not 'px' in text.lower() and
@@ -294,15 +293,52 @@ class BrandImageGenerator(BaseAgent):
                         not 'font' in text.lower() and
                         not 'color:' in text.lower() and
                         not 'turquoise' in text.lower() and
-                        not 'charcoal' in text.lower()):
+                        not 'charcoal' in text.lower() and
+                        not 'diagonally' in text.lower() and
+                        not 'across' in text.lower() and
+                        not 'composition' in text.lower() and
+                        not 'should feel' in text.lower() and
+                        not 'spontaneous' in text.lower() and
+                        not 'cinematic' in text.lower() and
+                        not 'edgy' in text.lower() and
+                        not 'reflecting' in text.lower() and
+                        len(text.split()) <= 6):  # Limit to short phrases
                         message_text = text
                         break
 
             # Fallback to theme or headline
             text = message_text or theme or prompt_info.get("headline", "") or f"Post {index}"
 
-            # Clean up text
+            # Clean up text and ensure it's only the display text
             text = text.strip()
+            
+            # Additional cleaning to remove any descriptive text that might have been captured
+            # Split by common descriptive words and take only the first part
+            descriptive_words = ['diagonally', 'across', 'image', 'composition', 'should', 'feel', 'spontaneous', 'cinematic', 'edgy', 'reflecting', 'en police', 'en écriture', 'couleur', 'lumineux', 'chaleureux', 'confortables', 'neutres', 'visage', 'sourire', 'introspectif', 'arrière-plan', 'esquisses', 'texture', 'artistique', 'lumière', 'naturelle', 'baigne', 'scène', 'créant', 'atmosphère', 'paisible', 'superposez', 'ajoutez', 'surimpression']
+            for word in descriptive_words:
+                if word in text.lower():
+                    text = text.split(word)[0].strip()
+                    break
+            
+            # If text is still too long (more than 6 words), try to extract just the first meaningful phrase
+            if len(text.split()) > 6:
+                # Look for common French text patterns
+                import re
+                short_patterns = [
+                    r'^([A-Z][^.]*?)(?:\s+[a-z]|$)',
+                    r'^([^.]{1,50})(?:\s+[a-z]|$)',
+                ]
+                for pattern in short_patterns:
+                    match = re.search(pattern, text)
+                    if match:
+                        text = match.group(1).strip()
+                        break
+            
+            # Remove trailing punctuation that might be from descriptions
+            text = text.rstrip('.,;:!?')
+            
+            # Log the extracted text for debugging
+            self.logger.info(f"Extracted text for post {index}: '{text}'")
 
             try:
                 self.logger.info(f"Generating image {index}/{len(prompts)} for {domain}")
